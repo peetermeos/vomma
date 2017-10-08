@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 import sigma.trading.Connector;
@@ -52,6 +51,20 @@ public class DataCapture extends Connector {
     	}
     }
     
+    /**
+     * Create instruments and request data
+     */
+    public void requestData() {
+    	
+    }
+    
+    /**
+     * Run the capture
+     */
+    public void run() {
+    	
+    }
+    
 	/**
 	 * Main entry point
 	 * 
@@ -70,6 +83,9 @@ public class DataCapture extends Connector {
 		} catch (Exception e) {
 			tws.logger.error(e.toString());
 		}
+		
+		tws.requestData();
+		tws.run();
 		
 		// Disconnect from tick database
 		try {
