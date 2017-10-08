@@ -3,5 +3,15 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="jars/TwsApi_debug.jar"/>
+	<classpathentry kind="lib" path="jars/arpack-combo.jar"/>
+	<classpathentry kind="lib" path="jars/csparsej.jar"/>
+	<classpathentry kind="lib" path="jars/jplasma.jar"/>
+	<classpathentry kind="lib" path="jars/jquantlib-0.2.4.jar"/>
+	<classpathentry kind="lib" path="jars/jtransforms.jar"/>
+	<classpathentry kind="lib" path="jars/junit.jar"/>
+	<classpathentry kind="lib" path="jars/netlib-java.jar"/>
+	<classpathentry kind="lib" path="jars/optimization.jar"/>
+	<classpathentry kind="lib" path="jars/parallelcolt-0.9.4.jar"/>
+	<classpathentry kind="lib" path="jars/joptimizer-4.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

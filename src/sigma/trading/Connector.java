@@ -44,12 +44,16 @@ public class Connector implements EWrapper {
 	
 	private EReaderSignal reader;
 	private EClientSocket client;
+
+	private int validId;
 	
 	/**
 	 * Default constructor
 	 */
 	public Connector() {
 		logger = new Logger();
+		
+		validId = -1;
 		
 		reader = new EJavaSignal();
 		client = new EClientSocket(this, reader);
@@ -142,11 +146,12 @@ public class Connector implements EWrapper {
 
 	/**
 	 * Current time processing
+	 * 
+	 * @param time long timestamp
 	 */
 	@Override
-	public void currentTime(long arg0) {
-		logger.log("Current time is :" + arg0);
-		
+	public void currentTime(long time) {
+		logger.log("Current time is :" + time);	
 	}
 
 	@Override
@@ -167,16 +172,24 @@ public class Connector implements EWrapper {
 		
 	}
 
+	/**
+	 * Error logging (exception)
+	 * 
+	 * @param e Exception to be logged
+	 */
 	@Override
-	public void error(Exception arg0) {
-		// TODO Auto-generated method stub
-		
+	public void error(Exception e) {
+		logger.error(e.toString());
 	}
 
+	/**
+	 * Error logging (string)
+	 * 
+	 * @param e String containing error text
+	 */
 	@Override
-	public void error(String arg0) {
-		// TODO Auto-generated method stub
-		
+	public void error(String e) {
+		logger.error(e);		
 	}
 
 	@Override
@@ -305,10 +318,14 @@ public class Connector implements EWrapper {
 		
 	}
 
+	/**
+	 * Update next valid ID
+	 * 
+	 * @param nextId containing next valid ID
+	 */
 	@Override
-	public void nextValidId(int arg0) {
-		// TODO Auto-generated method stub
-		
+	public void nextValidId(int nextId) {
+		this.validId = nextId;	
 	}
 
 	@Override
