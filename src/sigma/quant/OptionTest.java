@@ -21,4 +21,44 @@ public class OptionTest {
 		fail("Not yet implemented"); // TODO
 	}
 
+	@Test
+	public final void testDelta() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testGamma() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testVega() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testTheta() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testCharm() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testThega() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testColor() {
+		fail("Not yet implemented"); // TODO
+	}
+
+	@Test
+	public final void testSpeed() {
+		fail("Not yet implemented"); // TODO
+	}
+
 }
