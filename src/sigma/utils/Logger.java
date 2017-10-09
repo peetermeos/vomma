@@ -12,7 +12,6 @@ import java.util.Date;
 public class Logger {
 	private LogLevel myLogLevel;
 	
-	
 	/**
 	 * Default constructor sets the loglevel to INFO
 	 */

@@ -5,8 +5,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 import sigma.trading.Connector;
+import sigma.trading.Instrument;
 
 /**
  * This implements tick data retrieval and import into database
@@ -20,6 +22,8 @@ public class DataCapture extends Connector {
     private Statement statement = null;
     private PreparedStatement preparedStatement = null;
     private ResultSet resultSet = null;
+    
+	protected ArrayList<Instrument> instList;
     
     // Configuration
     String host = "localhost";
@@ -51,18 +55,28 @@ public class DataCapture extends Connector {
     	}
     }
     
-    /**
-     * Create instruments and request data
-     */
-    public void requestData() {
-    	
-    }
+	/** 
+	 * Create instruments and request data
+	 */
+	public void createInstruments() {
+		instList = new ArrayList<Instrument>();
+		
+		logger.log("Creating instruments");
+		instList.add(new Instrument("CL", "NYMEX", "FUT", "201711"));
+		
+		
+		logger.log("Requesting market data");
+		for(Instrument i: instList) {
+			if(this.getClient().isConnected())
+				this.getClient().reqMktData(this.getValidId(), i.getContract(), "", false, true, null);
+		}
+	}
     
     /**
      * Run the capture
      */
     public void run() {
-    	
+    	// TODO Wait until keypress or cancel 
     }
     
 	/**
@@ -84,7 +98,7 @@ public class DataCapture extends Connector {
 			tws.logger.error(e.toString());
 		}
 		
-		tws.requestData();
+		tws.createInstruments();
 		tws.run();
 		
 		// Disconnect from tick database

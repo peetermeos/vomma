@@ -1,5 +1,7 @@
 package sigma.trading;
 
+import java.util.ArrayList;
+
 /**
  * Simple news trading implementation
  * 
@@ -9,6 +11,25 @@ package sigma.trading;
  */
 public class NewsTrader extends Connector {
 
+	protected ArrayList<Instrument> instList;
+	
+	/** 
+	 * Create instruments and request data
+	 */
+	public void createInstruments() {
+		instList = new ArrayList<Instrument>();
+		
+		logger.log("Creating instruments");
+		instList.add(new Instrument("CL", "NYMEX", "FUT", "201711"));
+		
+		
+		logger.log("Requesting market data");
+		for(Instrument i: instList) {
+			if(this.getClient().isConnected())
+				this.getClient().reqMktData(this.getValidId(), i.getContract(), "", false, true, null);
+		}
+	}
+	
 	/**
 	 * Main trading loop
 	 */
@@ -28,6 +49,7 @@ public class NewsTrader extends Connector {
 		trader = new NewsTrader();
 		
 		trader.twsConnect();
+		trader.createInstruments();
 		trader.run();
 		trader.twsDisconnect();
 	}

@@ -62,7 +62,7 @@ public class Connector implements EWrapper {
 	
 	private class ProcessThread extends Thread {
 		public void run() {
-    		while (client.isConnected()) { 
+    		while (getClient().isConnected()) { 
     			signal.waitForSignal(); 
     			try {
 					reader.processMsgs();
@@ -91,13 +91,13 @@ public class Connector implements EWrapper {
 	 */
 	public void twsConnect() {
 		logger.log("Connecting to TWS API");
-		client.eConnect("localhost", 4001, 1);
+		getClient().eConnect("localhost", 4001, 1);
 		
-		while(! client.isConnected()) {}
+		while(! getClient().isConnected()) {}
 		logger.log("Connection established");
 		
 		//Create a reader to consume messages from the TWS. The EReader will consume the incoming messages and put them in a queue
-        reader = new EReader(client, signal);
+        reader = new EReader(getClient(), signal);
         reader.start();
         
         //Once the messages are in the queue, an additional thread can be created to fetch them
@@ -110,7 +110,7 @@ public class Connector implements EWrapper {
 	 */
 	public void twsDisconnect() {
 		logger.log("Disconnecting from TWS");
-		client.eDisconnect();
+		getClient().eDisconnect();
 		t.interrupt();		
 	}
 
@@ -143,7 +143,7 @@ public class Connector implements EWrapper {
 	@Override
 	public void accountUpdateMulti(int reqId, String account, String modelCode, String key, String value, String currency) {
 		logger.log("Account Update Multi. Request: " + reqId + ", Account: " + account + 
-				", ModelCode: " + modelCode + ", Key: " + key + ", Value: " + value + ", Currency: " + currency + "\n");	
+				", ModelCode: " + modelCode + ", Key: " + key + ", Value: " + value + ", Currency: " + currency );	
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void error(int id, int errorCode, String errorMsg) {
-		logger.error("Id: " + id + ", Code: " + errorCode + ", Msg: " + errorMsg + "\n");		
+		logger.error("Id: " + id + ", Code: " + errorCode + ", Msg: " + errorMsg);		
 	}
 
 	@Override
@@ -667,5 +667,18 @@ public class Connector implements EWrapper {
 		
 	}
 
+	/**
+	 * @return the validId
+	 */
+	public int getValidId() {
+		return validId;
+	}
+
+	/**
+	 * @return the client
+	 */
+	public EClientSocket getClient() {
+		return client;
+	}
 
 }
