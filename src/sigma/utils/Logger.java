@@ -20,17 +20,27 @@ public class Logger {
 		this.setMyLogLevel(LogLevel.INFO);
 	}
 
+	/** 
+	 * Logging with specified loglevel
+	 * 
+	 * @param l loglevel
+	 * @param s string to be logged
+	 */
+	private void log(LogLevel l, String s) {
+		Date dtg;
+		
+		dtg = new Date();		
+		
+		System.out.println(dtg + " " + l.toString() + " : " + s);
+	}
+	
 	/**
 	 * Prints out timestamped text to be logged
 	 * 
 	 * @param s String to be logged
 	 */
 	public void log(String s) {
-		Date dtg;
-		
-		dtg = new Date();
-		
-		System.out.println(dtg + " " + s);
+		this.log(LogLevel.INFO, s);
 	}
 	
 	/**
@@ -40,8 +50,26 @@ public class Logger {
 	 * @param s error text to be logged
 	 */
 	public void error(String s) {
-		this.log(s);
+		this.log(LogLevel.ERROR, s);
 	}
+	
+	/**
+	 * Warning logging functionality for warning text
+	 * 
+	 * @param s warning text to be logged
+	 */
+	public void warning(String s) {
+		this.log(LogLevel.WARN, s);
+	}
+	
+	/**
+	 * Verbose logging functionality for text
+	 * 
+	 * @param s text to be logged
+	 */
+	public void verbose(String s) {
+		this.log(LogLevel.VERBOSE, s);
+	}	
 
 	/**
 	 * @return the myLogLevel
