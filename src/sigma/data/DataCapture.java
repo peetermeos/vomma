@@ -25,9 +25,8 @@ public class DataCapture extends Connector {
 	private Instrument inst;
 	
     private Connection connect = null;
-    private Statement statement = null;
-    private PreparedStatement preparedStatement = null;
-    private ResultSet resultSet = null;
+    //private Statement statement = null;
+    //private ResultSet resultSet = null;
     
 	protected ArrayList<Instrument> instList;
     
