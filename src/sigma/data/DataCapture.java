@@ -4,8 +4,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+
+import com.ib.client.TickAttr;
 
 import sigma.trading.Connector;
 import sigma.trading.Instrument;
@@ -71,6 +74,84 @@ public class DataCapture extends Connector {
 				this.getClient().reqMktData(this.getValidId(), i.getContract(), "", false, true, null);
 		}
 	}
+	
+	/**
+	 * Tick price processing needs to be overriden
+	 */
+	@Override
+	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
+		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
+				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
+                ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
+		
+		// Write update to database
+		this.writeEntry(field, price);
+		
+		switch(field) {
+		case 1: //bid
+			break;
+		case 2: // ask
+			break;
+		case 4: //last
+			break;
+		default:
+			break;
+		}
+		
+	}
+	
+	/**
+	 * Tick size processing needs to be overriden
+	 */
+	@Override
+	public void tickSize(int tickerId, int field, int size) {
+		logger.log("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
+		
+		// Size is cast from int to double
+		this.writeEntry(field, size);
+		
+		switch(field) {
+		case 0: //bid
+			break;
+		case 3: // ask
+			break;
+		case 5: // last
+			break;
+		default:
+			break;
+		}
+	}
+	
+	public void writeEntry(int field, double value) {
+		PreparedStatement preparedStmt = null;
+		
+	    String query = " insert into ticks (symbol, spotDelta, bidDelta, askDelta, bidSize, askSize, spotSize)"
+    	        + " values (?, ?, ?, ?, ?, ?, ?)";
+
+    	try {
+			preparedStmt = this.connect.prepareStatement(query);
+    	} catch (SQLException e) {
+    		logger.error(e.toString());
+		}
+    	      
+        /*
+        preparedStmt.setString (1, "Barney");
+        preparedStmt.setString (2, "Rubble");
+        preparedStmt.setDate   (3, startDate);
+        preparedStmt.setBoolean(4, false);
+        preparedStmt.setInt    (5, this.getBidSize());
+        preparedStmt.setInt    (6, this.getAskSize());
+        preparedStmt.setInt    (7, this.getSpotSize());
+        */
+    	    	
+    	try {
+    		if (preparedStmt != null)
+    			preparedStmt.execute();
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+	}
+
     
     /**
      * Run the capture
