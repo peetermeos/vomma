@@ -21,6 +21,9 @@ import sigma.trading.Instrument;
  *
  */
 public class DataCapture extends Connector {
+	
+	private Instrument inst;
+	
     private Connection connect = null;
     private Statement statement = null;
     private PreparedStatement preparedStatement = null;
@@ -33,6 +36,12 @@ public class DataCapture extends Connector {
     String db = "trading";
     String user = "user";
     String pwd = "pass";
+    
+    public DataCapture() {
+    	super();
+    	
+    	inst = new Instrument();
+    }
 
     /**
      * Connects to tick database
@@ -89,10 +98,13 @@ public class DataCapture extends Connector {
 		
 		switch(field) {
 		case 1: //bid
+			inst.setBid(price);
 			break;
 		case 2: // ask
+			inst.setAsk(price);
 			break;
 		case 4: //last
+			inst.setSpot(price);
 			break;
 		default:
 			break;
@@ -112,10 +124,13 @@ public class DataCapture extends Connector {
 		
 		switch(field) {
 		case 0: //bid
+			inst.setBidSize(size);
 			break;
 		case 3: // ask
+			inst.setAskSize(size);
 			break;
 		case 5: // last
+			inst.setSpotSize(size);
 			break;
 		default:
 			break;
@@ -133,17 +148,45 @@ public class DataCapture extends Connector {
     	} catch (SQLException e) {
     		logger.error(e.toString());
 		}
-    	      
-        /*
-        preparedStmt.setString (1, "Barney");
-        preparedStmt.setString (2, "Rubble");
-        preparedStmt.setDate   (3, startDate);
-        preparedStmt.setBoolean(4, false);
-        preparedStmt.setInt    (5, this.getBidSize());
-        preparedStmt.setInt    (6, this.getAskSize());
-        preparedStmt.setInt    (7, this.getSpotSize());
-        */
-    	    	
+    	       
+        try {
+			preparedStmt.setString (1, inst.getSymbol());
+			preparedStmt.setDouble(2, 0.0);
+			preparedStmt.setDouble(3, 0.0);
+			preparedStmt.setDouble(4, 0.0);
+			preparedStmt.setInt(5, inst.getBidSize());
+			preparedStmt.setInt(6, inst.getAskSize());
+			preparedStmt.setInt(7, inst.getSpotSize());			
+		} catch (SQLException e) {
+			logger.error(e.toString());
+		}
+    	
+    	switch(field) {
+    	case 1: // bid
+    		try {
+				preparedStmt.setDouble(2, value - inst.getSpot());
+			} catch (SQLException e) {
+				logger.error(e.toString());
+			}
+    		break;
+    	case 2: // ask
+    		try {
+				preparedStmt.setDouble(3, value - inst.getBid());
+			} catch (SQLException e) {
+				logger.error(e.toString());
+			}
+    		break;
+    	case 4: // last
+    		try {
+				preparedStmt.setDouble(4, value - inst.getAsk());
+			} catch (SQLException e) {
+				logger.error(e.toString());
+			}
+    		break;
+    	default:
+    		break;
+    	}
+    	         	    	
     	try {
     		if (preparedStmt != null)
     			preparedStmt.execute();

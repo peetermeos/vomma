@@ -188,4 +188,13 @@ public class Instrument {
 	public int getSpotSize() {
 		return(this.spotSize);
 	}
+	
+	/**
+	 * Gets symbol name of the instrument
+	 * 
+	 * @return Symbol name of the instrument
+	 */
+	public String getSymbol() {
+		return(this.symbol);
+	}
 }
