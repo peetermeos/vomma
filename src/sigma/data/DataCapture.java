@@ -75,7 +75,7 @@ public class DataCapture extends Connector {
 		
 		logger.log("Creating instruments");
 		instList.add(new Instrument("CL", "NYMEX", "FUT", "201711"));
-		
+		inst = new Instrument("CL", "NYMEX", "FUT", "201711");
 		
 		logger.log("Requesting market data");
 		for(Instrument i: instList) {
