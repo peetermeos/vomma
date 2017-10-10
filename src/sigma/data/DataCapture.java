@@ -68,7 +68,7 @@ public class DataCapture extends Connector {
 		logger.log("Requesting market data");
 		for(Instrument i: instList) {
 			if(this.getClient().isConnected())
-				this.getClient().reqMktData(this.getValidId(), i.getContract(), "", false, true, null);
+				this.getClient().reqMktData(this.getValidId(), i.getContract(), "", false, false, null);
 		}
 	}
     
@@ -76,7 +76,7 @@ public class DataCapture extends Connector {
      * Run the capture
      */
     public void run() {
-    	// TODO Wait until keypress or cancel 
+    	while(true) {}
     }
     
 	/**
