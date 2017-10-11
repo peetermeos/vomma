@@ -560,7 +560,7 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
-		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
+		logger.verbose("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
 				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());	
 	}
@@ -579,7 +579,7 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void tickSize(int tickerId, int field, int size) {
-		logger.log("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
+		logger.verbose("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
 	}
 
 	/**
