@@ -93,7 +93,7 @@ public class DataCapture extends Connector {
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
 		
 		// Write update to database
-		this.writeEntry(field, price);
+		//this.writeEntry(field, price);
 		
 		switch(field) {
 		case 1: //bid
@@ -119,7 +119,7 @@ public class DataCapture extends Connector {
 		logger.log("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
 		
 		// Size is cast from int to double
-		this.writeEntry(field, size);
+		//this.writeEntry(field, size);
 		
 		switch(field) {
 		case 0: //bid
@@ -199,7 +199,9 @@ public class DataCapture extends Connector {
      * Run the capture
      */
     public void run() {
+    	logger.log("Main trading loop");
     	while(true) {}
+    	//logger.log("End of main trading loop");
     }
     
 	/**
