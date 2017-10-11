@@ -30,7 +30,9 @@ public class Logger {
 		
 		dtg = new Date();		
 		
-		System.out.println(dtg + " " + l.toString() + " : " + s);
+		// Only output stuff that are not higher than prescribed loglevel
+		if(l.compareTo(myLogLevel) <= 0)
+			System.out.println(dtg + " " + l.toString() + " : " + s);
 	}
 	
 	/**

@@ -3,9 +3,7 @@ package sigma.data;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 import com.ib.client.TickAttr;
@@ -31,10 +29,10 @@ public class DataCapture extends Connector {
 	protected ArrayList<Instrument> instList;
     
     // Configuration
-    String host = "localhost";
+    String host = "sigma-db.cq2omyeocnub.us-east-1.rds.amazonaws.com";
     String db = "trading";
-    String user = "user";
-    String pwd = "pass";
+    String user = "trading";
+    String pwd = "simukitkarp";
     
     public DataCapture() {
     	super();
@@ -48,7 +46,8 @@ public class DataCapture extends Connector {
      * @throws Exception
      */
     public void dbConnect() throws Exception {
-        Class.forName("com.mysql.jdbc.Driver");
+    
+        Class.forName("com.mysql.jdbc.Driver").newInstance();
 
         connect = DriverManager.getConnection("jdbc:mysql://" + 
         		host + "/" + db + "?" +
@@ -91,24 +90,23 @@ public class DataCapture extends Connector {
 		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
 				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
-		
-		// Write update to database
-		//this.writeEntry(field, price);
-		
+			
 		switch(field) {
 		case 1: //bid
+			this.writeEntry(field, price);
 			inst.setBid(price);
 			break;
 		case 2: // ask
+			this.writeEntry(field, price);
 			inst.setAsk(price);
 			break;
 		case 4: //last
+			this.writeEntry(field, price);
 			inst.setSpot(price);
 			break;
 		default:
 			break;
-		}
-		
+		}		
 	}
 	
 	/**
@@ -116,19 +114,19 @@ public class DataCapture extends Connector {
 	 */
 	@Override
 	public void tickSize(int tickerId, int field, int size) {
-		logger.log("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
-		
-		// Size is cast from int to double
-		//this.writeEntry(field, size);
+		logger.verbose("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
 		
 		switch(field) {
 		case 0: //bid
+			this.writeEntry(field, size);
 			inst.setBidSize(size);
 			break;
 		case 3: // ask
+			this.writeEntry(field, size);
 			inst.setAskSize(size);
 			break;
 		case 5: // last
+			this.writeEntry(field, size);
 			inst.setSpotSize(size);
 			break;
 		default:
@@ -139,61 +137,71 @@ public class DataCapture extends Connector {
 	public void writeEntry(int field, double value) {
 		PreparedStatement preparedStmt = null;
 		
-	    String query = " insert into ticks (symbol, spotDelta, bidDelta, askDelta, bidSize, askSize, spotSize)"
-    	        + " values (?, ?, ?, ?, ?, ?, ?)";
+	    String query = " insert into trading.tbl_ticks (symbol, dtg, spotDelta, bidDelta, askDelta, bidSize, askSize, spotSize)"
+    	        + " values (?, now(4), ?, ?, ?, ?, ?, ?)";
 
-    	try {
-			preparedStmt = this.connect.prepareStatement(query);
-    	} catch (SQLException e) {
-    		logger.error(e.toString());
-		}
-    	       
         try {
+        	preparedStmt = this.connect.prepareStatement(query);
 			preparedStmt.setString (1, inst.getSymbol());
-			preparedStmt.setDouble(2, 0.0);
-			preparedStmt.setDouble(3, 0.0);
-			preparedStmt.setDouble(4, 0.0);
-			preparedStmt.setInt(5, inst.getBidSize());
-			preparedStmt.setInt(6, inst.getAskSize());
-			preparedStmt.setInt(7, inst.getSpotSize());			
 		} catch (SQLException e) {
 			logger.error(e.toString());
 		}
-    	
+	    			   	
     	switch(field) {
     	case 1: // bid
     		try {
 				preparedStmt.setDouble(2, value - inst.getSpot());
+				preparedStmt.setDouble(3, 0.0);
+				preparedStmt.setDouble(4, 0.0);
 			} catch (SQLException e) {
 				logger.error(e.toString());
 			}
     		break;
     	case 2: // ask
     		try {
+    			preparedStmt.setDouble(2, 0.0);
 				preparedStmt.setDouble(3, value - inst.getBid());
+				preparedStmt.setDouble(4, 0.0);
 			} catch (SQLException e) {
 				logger.error(e.toString());
 			}
     		break;
     	case 4: // last
     		try {
+				preparedStmt.setDouble(2, 0.0);
+				preparedStmt.setDouble(3, 0.0);
 				preparedStmt.setDouble(4, value - inst.getAsk());
 			} catch (SQLException e) {
 				logger.error(e.toString());
 			}
     		break;
     	default:
+    		try {
+				preparedStmt.setDouble(2, 0.0);
+				preparedStmt.setDouble(3, 0.0);
+				preparedStmt.setDouble(4, 0.0);
+			} catch (SQLException e) {
+				logger.error(e.toString());
+			}
     		break;
     	}
-    	         	    	
+
+        try {
+    		preparedStmt.setInt(5, inst.getBidSize());
+    		preparedStmt.setInt(6, inst.getAskSize());
+    		preparedStmt.setInt(7, inst.getSpotSize());
+    	} catch (SQLException e) {
+    		logger.error(e.toString());
+    	}
+        
     	try {
     		if (preparedStmt != null)
-    			preparedStmt.execute();
+    			preparedStmt.executeUpdate();
 		} catch (SQLException e) {
 			logger.error(e.toString());
 		}
 	}
-
+	
     
     /**
      * Run the capture
