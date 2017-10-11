@@ -31,10 +31,10 @@ public class DataCapture extends Connector {
 	protected ArrayList<Instrument> instList;
     
     // Configuration
-    String host = "localhost";
+    String host = "sigma-db.cq2omyeocnub.us-east-1.rds.amazonaws.com";
     String db = "trading";
-    String user = "user";
-    String pwd = "pass";
+    String user = "trading";
+    String pwd = "simukitkarp";
     
     public DataCapture() {
     	super();
@@ -93,7 +93,7 @@ public class DataCapture extends Connector {
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
 		
 		// Write update to database
-		this.writeEntry(field, price);
+		//this.writeEntry(field, price);
 		
 		switch(field) {
 		case 1: //bid
@@ -119,7 +119,7 @@ public class DataCapture extends Connector {
 		logger.log("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);		
 		
 		// Size is cast from int to double
-		this.writeEntry(field, size);
+		//this.writeEntry(field, size);
 		
 		switch(field) {
 		case 0: //bid
