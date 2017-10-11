@@ -31,6 +31,14 @@ public class Instrument {
 	 */
 	public Instrument() {
 		c = new Contract();
+		
+		this.spot = 0.0;
+		this.bid = 0.0;
+		this.ask = 0.0;
+		
+		this.bidSize = 0;
+		this.askSize = 0;
+		this.spotSize = 0;
 	}
 	
 	/**

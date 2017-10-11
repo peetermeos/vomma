@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="jars/optimization.jar"/>
 	<classpathentry kind="lib" path="jars/parallelcolt-0.9.4.jar"/>
 	<classpathentry kind="lib" path="jars/joptimizer-4.0.0.jar"/>
+	<classpathentry kind="lib" path="jars/mysql-connector-java-5.0.8-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

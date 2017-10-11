@@ -18,6 +18,7 @@ import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
 import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
+import com.ib.client.EWrapperMsgGenerator;
 import com.ib.client.Execution;
 import com.ib.client.FamilyCode;
 import com.ib.client.HistogramEntry;
@@ -91,7 +92,7 @@ public class Connector implements EWrapper {
 	 */
 	public void twsConnect() {
 		logger.log("Connecting to TWS API");
-		getClient().eConnect("localhost", 4001, 1);
+		getClient().eConnect("localhost", 4001, 2);
 		
 		while(! getClient().isConnected()) {}
 		logger.log("Connection established");
@@ -136,7 +137,7 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void accountSummaryEnd(int reqId) {
-		logger.log("AccountSummaryEnd. Req Id: " + reqId + "\n");
+		logger.verbose("AccountSummaryEnd. Req Id: " + reqId + "\n");
 		
 	}
 
@@ -151,27 +152,32 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void accountUpdateMultiEnd(int reqId) {
-		logger.log("Account Update Multi End. Request: " + reqId + "\n");		
+		logger.verbose("Account Update Multi End. Request: " + reqId + "\n");		
 	}
 
+	/**
+	 * Bond contract details implementation.
+	 */
 	@Override
-	public void bondContractDetails(int arg0, ContractDetails arg1) {
-		// TODO Auto-generated method stub
-		
+	public void bondContractDetails(int reqId, ContractDetails contractDetails) {
+		logger.log(EWrapperMsgGenerator.contractDetails(reqId, contractDetails));		
 	}
 
-	@Override
-	public void commissionReport(CommissionReport arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	/**
+	 * Commission report handling
+	 */
+    @Override
+    public void commissionReport(CommissionReport commissionReport) {
+        logger.verbose("CommissionReport. [" + commissionReport.m_execId + "] - [" + commissionReport.m_commission + 
+        		"] [" + commissionReport.m_currency + "] RPNL [" + commissionReport.m_realizedPNL + "]");
+    }
 
 	/** 
 	 * Connection acknowledgement
 	 */
 	@Override
 	public void connectAck() {
-		logger.log("Connection request received by TWS");
+		logger.verbose("Connection request received by TWS");
 	}
 
 	/** 
@@ -183,15 +189,20 @@ public class Connector implements EWrapper {
 		
 	}
 
+	/**
+	 * Default contract details handling. 
+	 */
 	@Override
-	public void contractDetails(int arg0, ContractDetails arg1) {
-		// TODO Auto-generated method stub
-		
+	public void contractDetails(int reqId, ContractDetails contractDetails) {
+        logger.log(EWrapperMsgGenerator.contractDetails(reqId, contractDetails));
 	}
 
+	/**
+	 * End of contract details request message
+	 */
 	@Override
-	public void contractDetailsEnd(int arg0) {
-		// TODO Auto-generated method stub
+	public void contractDetailsEnd(int reqId) {
+		logger.verbose("End of contract details for request " + reqId);
 		
 	}
 
@@ -205,22 +216,30 @@ public class Connector implements EWrapper {
 		logger.log("Current time is :" + time);	
 	}
 
+	/**
+	 * Delta neutral validation processing
+	 */
 	@Override
-	public void deltaNeutralValidation(int arg0, DeltaNeutralContract arg1) {
-		// TODO Auto-generated method stub
-		
+	public void deltaNeutralValidation(int reqId, DeltaNeutralContract contract) {
+		logger.verbose("Delta neutral validation request "  + reqId  + " response " + contract.toString());
 	}
 
+	/**
+	 * A one-time response to querying the display groups.
+	 */
 	@Override
-	public void displayGroupList(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	public void displayGroupList(int reqId, String groups) {
+		logger.verbose("Display groups for reqId " + reqId + ": " + groups);
 	}
 
-	@Override
-	public void displayGroupUpdated(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	/**
+	 * Call triggered once after receiving the subscription request, 
+	 * and will be sent again if the selected contract in the subscribed * 
+	 * display group has changed.
+	 */
+	 @Override
+	public void displayGroupUpdated(int reqId, String contractInfo ) {
+		logger.verbose("Display group updated for request " + reqId + " contract " + contractInfo);
 	}
 
 	/**
@@ -255,124 +274,204 @@ public class Connector implements EWrapper {
 		logger.error("Id: " + id + ", Code: " + errorCode + ", Msg: " + errorMsg);		
 	}
 
+	/**
+	 * Order execution details handling
+	 */
+    @Override
+    public void execDetails(int reqId, Contract contract, Execution execution) {
+        logger.verbose("ExecDetails. " + reqId + " - [" + contract.symbol() + "], [" +
+        		contract.secType() + "], [" + contract.currency() + "], [" +
+        		execution.execId() + "], [" + execution.orderId() + "], [" + execution.shares() + "]");
+    }
+
+	/**
+	 * End of execution details request.
+	 */
 	@Override
-	public void execDetails(int arg0, Contract arg1, Execution arg2) {
-		// TODO Auto-generated method stub
+	public void execDetailsEnd(int reqId) {
+		logger.verbose("End of execution details for request " + reqId);
 		
 	}
 
+	/**
+	 * Returns array of family codes
+	 */
 	@Override
-	public void execDetailsEnd(int arg0) {
-		// TODO Auto-generated method stub
+	public void familyCodes(FamilyCode[] familyCodes) {
+		for(FamilyCode i: familyCodes) {
+			logger.verbose("Family code " + i.toString());
+		}
+	}
+
+	/**
+	 * Fundamental data handling
+	 */
+    @Override
+    public void fundamentalData(int reqId, String data) {
+        logger.verbose("FundamentalData. ReqId: [" + reqId + "] - Data: [" + data + "]");
+    }
+
+	/**
+	 * Head timestamp processing
+	 */
+	@Override
+	public void headTimestamp(int reqId, String headTimestamp) {
+		logger.verbose("Head timestamp. Req Id: " + reqId + ", headTimestamp: " + headTimestamp);
+	}
+
+	/**
+	 * Returns data histogram
+	 */
+	@Override
+	public void histogramData(int reqId, List<HistogramEntry> data) {
+		for(HistogramEntry i: data) {
+			logger.log("Histogram entry for request " + reqId + " data " + i.toString());
+		}
+	}
+
+	/**
+	 * Historical data handling
+	 * 
+	 * @param reqId request ID
+	 * @param bar Bar class for bar data
+	 */
+	@Override
+	public void historicalData(int reqId, Bar bar) {
+		logger.verbose("HistoricalData. " + reqId + " - Date: " + bar.time() + ", Open: " + bar.open() +
+				", High: " + bar.high() + ", Low: " + bar.low() + ", Close: " + bar.close() +
+				", Volume: " + bar.volume() + ", Count: " + bar.count() + ", WAP: " + bar.wap());
 		
 	}
 
+	/**
+	 * End of historical data message
+	 */
 	@Override
-	public void familyCodes(FamilyCode[] arg0) {
-		// TODO Auto-generated method stub
+	public void historicalDataEnd(int reqId, String startDateStr, String endDateStr) {
+		logger.verbose("HistoricalDataEnd. " + reqId + " - Start Date: " + startDateStr + ", End Date: " + endDateStr);
+	}
+
+	/**
+	 * Update of historical data message
+	 */
+	@Override
+	public void historicalDataUpdate(int reqId, Bar bar) {
+		logger.verbose("HistoricalDataUpdate. " + reqId + " - Date: " + bar.time() + ", Open: " + bar.open() +
+				", High: " + bar.high() + ", Low: " + bar.low() + ", Close: " + bar.close() + ", Volume: " + bar.volume() +
+				", Count: " + bar.count() + ", WAP: " + bar.wap());	
+	}
+
+	/**
+	 * Returns news headline
+	 */
+	@Override
+	public void historicalNews(int reqId, String time, String providerCode, String articleId, String headline) {
+		logger.verbose("News request " + reqId + " at time " + time +
+				" provider " + providerCode + " article " + articleId +
+				" headline " + headline);
+	}
+
+	/**
+	 * Returns news headlines end marker
+	 */
+	@Override
+	public void historicalNewsEnd(int reqId, boolean hasMore ) {
+		logger.verbose("Historical news end for request " + reqId + " has more: " + hasMore);
+	}
+
+	/**
+	 * Processing of historical tick data
+	 */
+	@Override
+	public void historicalTicks(int reqId, List<HistoricalTick> ticks, boolean done2) {
+		for (HistoricalTick tick : ticks) {
+            logger.verbose(EWrapperMsgGenerator.historicalTick(reqId, tick.time(), tick.price(), tick.size()));
+		}
 		
 	}
 
+	/**
+	 * Processing of historical bid ask ticks
+	 */
 	@Override
-	public void fundamentalData(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	public void historicalTicksBidAsk(int reqId, List<HistoricalTickBidAsk> ticks, boolean done) {
+        for (HistoricalTickBidAsk tick : ticks) {
+            logger.verbose(EWrapperMsgGenerator.historicalTickBidAsk(reqId, tick.time(), tick.mask(), tick.priceBid(), tick.priceAsk(), tick.sizeBid(),
+                    tick.sizeAsk()));
+        }		
 	}
 
+	/**
+	 * Processing of historical last ticks
+	 */
 	@Override
-	public void headTimestamp(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	public void historicalTicksLast(int reqId, List<HistoricalTickLast> ticks, boolean done) {
+        for (HistoricalTickLast tick : ticks) {
+            logger.verbose(EWrapperMsgGenerator.historicalTickLast(reqId, tick.time(), tick.mask(), tick.price(), tick.size(), tick.exchange(), 
+                tick.specialConditions()));
+        }
 	}
 
+	/**
+	 * Receives a comma-separated string with the managed account IDs. 
+	 * Occurs automatically on initial API client connection.
+	 */
 	@Override
-	public void histogramData(int arg0, List<HistogramEntry> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void managedAccounts(String accountsList) {
+		logger.verbose("Managed accounts " + accountsList);
 	}
 
+	/**
+	 * Returns the market data type (real-time, frozen, delayed, delayed-frozen) of ticker 
+	 * sent by EClientSocket::reqMktData when TWS switches from real-time to frozen and back 
+	 * and from delayed to delayed-frozen and back.
+	 */
 	@Override
-	public void historicalData(int arg0, Bar arg1) {
-		// TODO Auto-generated method stub
-		
+	public void marketDataType(int reqId, int marketDataType ) {
+		logger.verbose("Request " + reqId + " market data type " + marketDataType);
 	}
 
+	/**
+	 * Returns minimum price increment structure for a particular market rule ID 
+	 * market rule IDs for an instrument on valid exchanges can be obtained from the 
+	 * contractDetails object for that contract
+	 */
 	@Override
-	public void historicalDataEnd(int arg0, String arg1, String arg2) {
-		// TODO Auto-generated method stub
-		
+	public void marketRule(int marketRuleId, PriceIncrement[] priceIncrements) {
+		for(PriceIncrement i: priceIncrements) {
+			logger.verbose("Market rule id " + marketRuleId +
+					" price increment " + i.toString());
+		}
 	}
 
+	/**
+	 * Called when receives Depth Market Data Descriptions
+	 */
 	@Override
-	public void historicalDataUpdate(int arg0, Bar arg1) {
-		// TODO Auto-generated method stub
-		
+	public void mktDepthExchanges(DepthMktDataDescription[] depthMktDataDescriptions) {
+		for(DepthMktDataDescription i: depthMktDataDescriptions)
+			logger.verbose("Depth market data description " + i.toString());
 	}
 
+	/**
+	 * News article retrieval
+	 */
 	@Override
-	public void historicalNews(int arg0, String arg1, String arg2, String arg3, String arg4) {
-		// TODO Auto-generated method stub
-		
+	public void newsArticle(int reqId, int articleType, String articleText) {
+		logger.verbose("News article request " + reqId + " for article type " + articleType +
+				" containing " + articleText);
 	}
 
+	/**
+	 * News provider listing.
+	 */
 	@Override
-	public void historicalNewsEnd(int arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void historicalTicks(int arg0, List<HistoricalTick> arg1, boolean arg2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void historicalTicksBidAsk(int arg0, List<HistoricalTickBidAsk> arg1, boolean arg2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void historicalTicksLast(int arg0, List<HistoricalTickLast> arg1, boolean arg2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void managedAccounts(String arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void marketDataType(int arg0, int arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void marketRule(int arg0, PriceIncrement[] arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mktDepthExchanges(DepthMktDataDescription[] arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void newsArticle(int arg0, int arg1, String arg2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void newsProviders(NewsProvider[] arg0) {
-		// TODO Auto-generated method stub
-		
+	public void newsProviders(NewsProvider[] newsProviders)		
+    {
+		logger.verbose("News providers:");
+		for(NewsProvider i : newsProviders) {
+			logger.verbose(i.toString());
+		}
 	}
 
 	/**
@@ -382,38 +481,61 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void nextValidId(int nextId) {
+		logger.verbose("Next valid ID received");
 		this.validId = nextId;	
 	}
 
-	@Override
-	public void openOrder(int arg0, Contract arg1, Order arg2, OrderState arg3) {
-		// TODO Auto-generated method stub
-		
-	}
+	/**
+	 * Open order processing
+	 */
+  	@Override
+    public void openOrder(int orderId, Contract contract, Order order,
+            OrderState orderState) {
+        logger.verbose("OpenOrder. ID: " + orderId + ", " + contract.symbol() + ", "+contract.secType() +
+        		" @ " + contract.exchange() + ": " +
+        		order.action() + ", " + order.orderType() + " " + order.totalQuantity() +
+        		", " + orderState.status());
+    }
 
+	/**
+	 * Open orders listing end.
+	 */
 	@Override
 	public void openOrderEnd() {
-		// TODO Auto-generated method stub
+		logger.verbose("End of open orders.");
 		
 	}
 
+	/**
+	 * Order status processing
+	 */
+    @Override
+    public void orderStatus(int orderId, String status, double filled,
+            double remaining, double avgFillPrice, int permId, int parentId,
+            double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
+        logger.verbose("OrderStatus. Id: " + orderId + ", Status: " + status + ", Filled" + filled +
+        		", Remaining: " + remaining + ", AvgFillPrice: " + avgFillPrice + ", PermId: " + permId +
+        		", ParentId: " + parentId + ", LastFillPrice: " + lastFillPrice +
+                ", ClientId: " + clientId + ", WhyHeld: " + whyHeld + ", MktCapPrice: " + mktCapPrice);
+    }
+
+    /**
+     * receives PnL updates in real time for the daily PnL and the total unrealized PnL for an account
+     */
 	@Override
-	public void orderStatus(int arg0, String arg1, double arg2, double arg3, double arg4, int arg5, int arg6,
-			double arg7, int arg8, String arg9, double arg10) {
-		// TODO Auto-generated method stub
+	public void pnl(int reqId, double dailyPnL, double unrealizedPnL) {
+		logger.verbose("Pnl for request " + reqId + " daily PnL " + dailyPnL +
+				" unrealised PnL " + unrealizedPnL);
 		
 	}
 
+	/**
+	 * Receives real time updates for single position daily PnL values
+	 */
 	@Override
-	public void pnl(int arg0, double arg1, double arg2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pnlSingle(int arg0, int arg1, double arg2, double arg3, double arg4) {
-		// TODO Auto-generated method stub
-		
+	public void pnlSingle(int reqId, int pos, double dailyPnL, double unrealizedPnL, double value) {
+		logger.verbose("Pnl for position " + pos + " : daily PnL " + dailyPnL +
+				" unrealised PnL " + unrealizedPnL + " value " + value);	
 	}
 
 	/**
@@ -452,86 +574,137 @@ public class Connector implements EWrapper {
 		logger.log("Position Multi End. Request: " + reqId);		
 	}
 
+	/**
+	 * Real time bar handling
+	 */
+    @Override
+    public void realtimeBar(int reqId, long time, double open, double high,
+            double low, double close, long volume, double wap, int count) {
+        logger.verbose("RealTimeBars. " + reqId + " - Time: " + time + ", Open: " + open + ", High: " + high + 
+        		", Low: " + low + ", Close: " + close + ", Volume: " + volume + 
+        		", Count: " + count + ", WAP: " + wap);
+    }
+
+    /**
+     * Financial Advisor message handling
+     */
+    @Override
+    public void receiveFA(int faDataType, String xml) {
+        logger.verbose("Receiving FA: " + faDataType + " - " + xml);
+    }
+
+    /**
+     * Returns conId and exchange for CFD market data request re-route
+     */
 	@Override
-	public void realtimeBar(int arg0, long arg1, double arg2, double arg3, double arg4, double arg5, long arg6,
-			double arg7, int arg8) {
-		// TODO Auto-generated method stub
+	public void rerouteMktDataReq(int reqId, int conId, String exchange) {
+		logger.verbose("Reroute request " + reqId + " for connection " + conId + " exchange " + exchange );		
+	}
+
+	/**
+	 * Returns the conId and exchange for an underlying contract when a request is made for level 2 
+	 * data for an instrument which does not have data in IB's database. 
+	 * For example stock CFDs and index CFDs.
+	 */
+	@Override
+	public void rerouteMktDepthReq(int reqId, int conId, String exchange) {
+		logger.verbose("Reroute mkt depth request " + reqId + " for connection " + conId + " exchange " + exchange);
+	}
+
+	/**
+	 * Scanner data processing
+	 */
+    @Override
+    public void scannerData(int reqId, int rank,
+            ContractDetails contractDetails, String distance, String benchmark,
+            String projection, String legsStr) {
+        logger.verbose("ScannerData. " + reqId + " - Rank: " + rank + ", Symbol: " + contractDetails.contract().symbol() + 
+        		", SecType: " + contractDetails.contract().secType() + ", Currency: " + contractDetails.contract().currency() +
+                ", Distance: " + distance + ", Benchmark: " + benchmark + ", Projection: " + projection + ", Legs String: " + legsStr);
+    }
+
+	/**
+	 * End of scanner data message.
+	 */
+	@Override
+	public void scannerDataEnd(int reqId) {
+		logger.verbose("End of scanner data for reqId " + reqId);
 		
 	}
 
+	/**
+	 * Scanner parameters processing
+	 */
 	@Override
-	public void receiveFA(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	public void scannerParameters(String xml) {
+		logger.verbose("Scanner parameters " + xml);
 	}
 
+	/**
+	 * Additional security parameter processing.
+	 * Useful for option chains.
+	 */
 	@Override
-	public void rerouteMktDataReq(int arg0, int arg1, String arg2) {
-		// TODO Auto-generated method stub
-		
+	public void securityDefinitionOptionalParameter(int reqId, String exchange, int underlyingConId, String tradingClass, String multiplier,
+			Set<String> expirations, Set<Double> strikes) {
+		logger.verbose("Additional parameters for reqId " + reqId +
+				" exchange : " + exchange +
+				" underlying contract id : " + underlyingConId +
+				" trading class : " + tradingClass +
+				" multiplier : " + multiplier);
+		for(String i: expirations) {
+			logger.verbose("Expiration " + i);
+		}
+		for(Double i: strikes) {
+			logger.verbose("Strike " + i);
+		}		
 	}
 
+	/**
+	 * End of message for optional security parameter processing.
+	 */
 	@Override
-	public void rerouteMktDepthReq(int arg0, int arg1, String arg2) {
-		// TODO Auto-generated method stub
-		
+	public void securityDefinitionOptionalParameterEnd(int reqId) {
+		logger.verbose("End of optional security parameters for reques " + reqId);
 	}
 
+	/**
+	 * Bit number to exchange + exchange abbreviation dictionary
+	 */
 	@Override
-	public void scannerData(int arg0, int arg1, ContractDetails arg2, String arg3, String arg4, String arg5,
-			String arg6) {
-		// TODO Auto-generated method stub
-		
+	public void smartComponents(int reqId, Map<Integer, Entry<String, Character>> theMap) {
+		logger.verbose("Smart components for reqId" + reqId + " received");
+		logger.verbose(theMap.toString());
 	}
 
+	/**
+	 * Soft dollar tiers reporting implementation
+	 */
 	@Override
-	public void scannerDataEnd(int arg0) {
-		// TODO Auto-generated method stub
-		
+	public void softDollarTiers(int reqId, SoftDollarTier[] tiers) {
+		logger.verbose("Soft dollar tiers for reqId " + reqId);
+		for(SoftDollarTier i: tiers)
+			logger.verbose(i.toString());		
 	}
 
+	/**
+	 * Symbol samples' processing
+	 */
 	@Override
-	public void scannerParameters(String arg0) {
-		// TODO Auto-generated method stub
-		
+	public void symbolSamples(int reqId, ContractDescription[] contractDescriptions) {
+		logger.verbose("Symbol samples for reqId " + reqId);
+		for(ContractDescription i: contractDescriptions)
+			logger.verbose(i.toString());	
 	}
 
+	/**
+	 * Exchange for Physicals tick processing
+	 */
 	@Override
-	public void securityDefinitionOptionalParameter(int arg0, String arg1, int arg2, String arg3, String arg4,
-			Set<String> arg5, Set<Double> arg6) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void securityDefinitionOptionalParameterEnd(int arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void smartComponents(int arg0, Map<Integer, Entry<String, Character>> arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void softDollarTiers(int arg0, SoftDollarTier[] arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void symbolSamples(int arg0, ContractDescription[] arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void tickEFP(int arg0, int arg1, double arg2, String arg3, double arg4, int arg5, String arg6, double arg7,
-			double arg8) {
-		// TODO Auto-generated method stub
-		
+	public void tickEFP(int tickerId, int tickType, double basisPoints, String formattedBasisPoints, double impliedFuture, 
+			int holdDays, String futureLastTradeDate, double dividendImpact,
+			double dividendsToLastTradeDate ) {
+		logger.verbose("EFP tick received. Ticker ID " + tickerId);
 	}
 
 	/**
@@ -539,28 +712,41 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void tickGeneric(int tickerId, int tickType, double value) {
-		logger.log("Tick Generic. Ticker Id:" + tickerId + ", Field: " + TickType.getField(tickType) + ", Value: " + value);	
+		logger.verbose("Tick Generic. Ticker Id:" + tickerId + ", Field: " + TickType.getField(tickType) + ", Value: " + value);	
 	}
 
+	/** 
+	 * News tick processing
+	 */
 	@Override
-	public void tickNews(int arg0, long arg1, String arg2, String arg3, String arg4, String arg5) {
-		// TODO Auto-generated method stub
+	public void tickNews(int tickerId, long timeStamp, String providerCode, String articleId, String headline, String extraData) {
+		logger.log("Tick News. TickerId: " + tickerId + ", TimeStamp: " + timeStamp + 
+				", ProviderCode: " + providerCode + ", ArticleId: " + articleId + 
+				", Headline: " + headline + ", ExtraData: " + extraData + "\n");
 		
 	}
 
-	@Override
-	public void tickOptionComputation(int arg0, int arg1, double arg2, double arg3, double arg4, double arg5,
-			double arg6, double arg7, double arg8, double arg9) {
-		// TODO Auto-generated method stub
-		
-	}
+	/**
+	 * Option greeks message processing
+	 */
+    @Override
+    public void tickOptionComputation(int tickerId, int field,
+            double impliedVol, double delta, double optPrice,
+            double pvDividend, double gamma, double vega, double theta,
+            double undPrice) {
+        logger.verbose("TickOptionComputation. TickerId: " + tickerId + ", field: " + field + 
+        		", ImpliedVolatility: " + impliedVol + ", Delta: " + delta +
+                ", OptionPrice: " + optPrice + ", pvDividend: " + pvDividend +
+                ", Gamma: " + gamma + ", Vega: " + vega + ", Theta: " + theta +
+                ", UnderlyingPrice: " + undPrice);
+    }
 
 	/**
 	 * Tick price processing
 	 */
 	@Override
 	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
-		logger.verbose("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
+		logger.verbose("Tick price. Ticker Id:" + tickerId + ", Field: " + field + 
 				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());	
 	}
@@ -595,7 +781,7 @@ public class Connector implements EWrapper {
 	 */
 	@Override
 	public void tickString(int tickerId, int tickType, String value) {
-		logger.log("Tick string. Ticker Id:" + tickerId + ", Type: " + tickType + ", Value: " + value);
+		logger.verbose("Tick string. Ticker Id:" + tickerId + ", Type: " + tickType + ", Value: " + value);
 	}
 
 	/**
@@ -614,23 +800,37 @@ public class Connector implements EWrapper {
 		logger.log("UpdateAccountValue. Key: " + key + ", Value: " + value + ", Currency: " + currency + ", AccountName: " + accountName);		
 	}
 
+	/**
+	 * Update market depth handling
+	 */
 	@Override
-	public void updateMktDepth(int arg0, int arg1, int arg2, int arg3, double arg4, int arg5) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void updateMktDepth(int tickerId, int position, int operation,
+            int side, double price, int size) {
+        logger.verbose("UpdateMarketDepth. " + tickerId + " - Position: " + position + 
+        		", Operation: " + operation + ", Side: " + side +
+        		", Price: " + price + ", Size: " + size + "");
+    }
 
-	@Override
-	public void updateMktDepthL2(int arg0, int arg1, String arg2, int arg3, int arg4, double arg5, int arg6) {
-		// TODO Auto-generated method stub
-		
-	}
+	/**
+	 * Market L2 depth handling
+	 */
+    @Override
+    public void updateMktDepthL2(int tickerId, int position,
+            String marketMaker, int operation, int side, double price, int size) {
+        logger.verbose("UpdateMarketDepthL2. " + tickerId + " - Position: " + position + 
+        		", Operation: " + operation + ", Side: " + side + 
+        		", Price: " + price + ", Size: " + size + "");
+    }
 
-	@Override
-	public void updateNewsBulletin(int arg0, int arg1, String arg2, String arg3) {
-		// TODO Auto-generated method stub
-		
-	}
+    /**
+     * News bulletin update handling
+     */
+    @Override
+    public void updateNewsBulletin(int msgId, int msgType, String message,
+            String origExchange) {
+       logger.verbose("News Bulletins. " + msgId + " - Type: " + msgType + 
+    		   ", Message: " + message + ", Exchange of Origin: " + origExchange);
+    }
 
 	/**
 	 * Portfolio update
@@ -643,28 +843,38 @@ public class Connector implements EWrapper {
                 + ", UnrealizedPNL: " + unrealizedPNL + ", RealizedPNL: " + realizedPNL+", AccountName: " + accountName);
 	}
 
+	/**
+	 * Verify and auth completion message
+	 */
 	@Override
-	public void verifyAndAuthCompleted(boolean arg0, String arg1) {
-		// TODO Auto-generated method stub
+	public void verifyAndAuthCompleted(boolean isSuccessful, String errorText) {
+		logger.verbose("Verify and auth completed : " + isSuccessful + " error text : " + errorText);	
+	}
+
+	/**
+	 * Verify and Authenticate message API implementation
+	 */
+	@Override
+	public void verifyAndAuthMessageAPI(String apiData, String xyzResponse) {
+		logger.verbose("Verify and auth message API data :" + apiData + " response : " + xyzResponse);
 		
 	}
 
+	/**
+	 * Verify completed implementation
+	 */
 	@Override
-	public void verifyAndAuthMessageAPI(String arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
+	public void verifyCompleted(boolean isSuccessful, String errorText) {
+		logger.verbose("Verify completed " + isSuccessful + "  error text " + errorText);	
 	}
 
+	/**
+	 * Verify message API implementation
+	 * @param apiData API data string
+	 */
 	@Override
-	public void verifyCompleted(boolean arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void verifyMessageAPI(String arg0) {
-		// TODO Auto-generated method stub
-		
+	public void verifyMessageAPI(String apiData) {
+		logger.verbose(apiData);
 	}
 
 	/**
