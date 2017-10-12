@@ -34,8 +34,7 @@ public class NewsTrader extends Connector {
 	 * Main trading loop
 	 */
 	public void run() {
-		this.logger.log("Running trading loop");
-		
+		this.logger.log("Running trading loop");		
 	}
 	
 	/**

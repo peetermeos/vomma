@@ -20,7 +20,6 @@ public class Instrument {
 	protected int askSize;
 	
 	// Symbol fields
-	protected Contract c;
 	protected String symbol;
 	protected String exch;
 	protected String expiry;
@@ -30,7 +29,6 @@ public class Instrument {
 	 * Standard constructor
 	 */
 	public Instrument() {
-		c = new Contract();
 		
 		this.spot = 0.0;
 		this.bid = 0.0;
@@ -56,18 +54,21 @@ public class Instrument {
 		this.exch = exchange;
 		this.type = type;
 		this.expiry = expiry;
-		
-		this.c.symbol(this.symbol);
-		this.c.exchange(this.exch);
-		this.c.secType(this.type);
-		this.c.lastTradeDateOrContractMonth(this.expiry);
 	}
 	
 	/**
 	 * Returns TWS contract for the instrument
+	 * 
 	 * @return TWS contract
 	 */
 	public Contract getContract() {
+		Contract c = new Contract();
+		
+		c.symbol(this.symbol);
+		c.exchange(this.exch);
+		c.secType(this.type);
+		c.lastTradeDateOrContractMonth(this.expiry);
+		
 		return(c);
 	}
 	
