@@ -16,7 +16,16 @@ public class Logger {
 	 * Default constructor sets the loglevel to INFO
 	 */
 	public Logger() {
-		this.setMyLogLevel(LogLevel.INFO);
+		this(LogLevel.INFO);
+	}
+	
+	/**
+	 * Constructor that sets the maximal loglevel
+	 * 
+	 * @param l loglevel threshold
+	 */
+	public Logger(LogLevel l) {
+		this.myLogLevel = l;
 	}
 
 	/** 

@@ -3,6 +3,7 @@ package sigma.trading;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ import com.ib.client.SoftDollarTier;
 import com.ib.client.TickAttr;
 import com.ib.client.TickType;
 
+import sigma.utils.LogLevel;
 import sigma.utils.Logger;
 
 /**
@@ -78,7 +80,7 @@ public class Connector implements EWrapper {
 	 * Default constructor
 	 */
 	public Connector() {
-		logger = new Logger();
+		logger = new Logger(LogLevel.INFO);
 		
 		validId = -1;
 		
@@ -91,8 +93,21 @@ public class Connector implements EWrapper {
 	 * Uses localhost and port 4001
 	 */
 	public void twsConnect() {
-		logger.log("Connecting to TWS API");
-		getClient().eConnect("localhost", 4001, 2);
+		this.twsConnect("localhost", 4001);
+	}
+	
+	/**
+	 * Connection to TWS API at specified host and port
+	 * 
+	 * @param host hostname or IP
+	 * @param port API port
+	 */
+	public void twsConnect(String host, int port) {
+		// For getting random connection IDs
+		Random rand = new Random();
+		
+		logger.log("Connecting to TWS API at " + host + ":" + port);
+		getClient().eConnect(host, port, rand.nextInt() + 1);
 		
 		while(! getClient().isConnected()) {}
 		logger.log("Connection established");
@@ -103,7 +118,7 @@ public class Connector implements EWrapper {
         
         //Once the messages are in the queue, an additional thread can be created to fetch them
         t = new ProcessThread(); 
-        t.start();
+        t.start();		
 	}
 	
 	/**

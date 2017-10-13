@@ -19,8 +19,10 @@ public class Instrument {
 	protected int bidSize;
 	protected int askSize;
 	
+	// Quantity and price fields
+	protected long pos;
+	
 	// Symbol fields
-	protected Contract c;
 	protected String symbol;
 	protected String exch;
 	protected String expiry;
@@ -30,7 +32,6 @@ public class Instrument {
 	 * Standard constructor
 	 */
 	public Instrument() {
-		c = new Contract();
 		
 		this.spot = 0.0;
 		this.bid = 0.0;
@@ -56,18 +57,21 @@ public class Instrument {
 		this.exch = exchange;
 		this.type = type;
 		this.expiry = expiry;
-		
-		this.c.symbol(this.symbol);
-		this.c.exchange(this.exch);
-		this.c.secType(this.type);
-		this.c.lastTradeDateOrContractMonth(this.expiry);
 	}
 	
 	/**
 	 * Returns TWS contract for the instrument
+	 * 
 	 * @return TWS contract
 	 */
 	public Contract getContract() {
+		Contract c = new Contract();
+		
+		c.symbol(this.symbol);
+		c.exchange(this.exch);
+		c.secType(this.type);
+		c.lastTradeDateOrContractMonth(this.expiry);
+		
 		return(c);
 	}
 	
@@ -204,5 +208,23 @@ public class Instrument {
 	 */
 	public String getSymbol() {
 		return(this.symbol);
+	}
+	
+	/**
+	 * Sets position for the instrument
+	 * 
+	 * @param l position to be set
+	 */
+	public void setPos(long l) {
+		this.pos = l;
+	}
+	
+	/**
+	 * Gets position of the instrument
+	 * 
+	 * @return Position of the instrument
+	 */
+	public long getPos() {
+		return(this.pos);
 	}
 }
