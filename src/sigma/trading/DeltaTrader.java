@@ -2,6 +2,8 @@ package sigma.trading;
 
 import java.io.IOException;
 
+import com.ib.client.Contract;
+import com.ib.client.Execution;
 import com.ib.client.Order;
 import com.ib.client.OrderType;
 import com.ib.client.TickAttr;
@@ -18,8 +20,9 @@ import com.ib.client.Types.Action;
 public class DeltaTrader extends Connector {
 	
 	protected Instrument inst;
-	protected int threshold = 60;
+	protected int threshold = 40;
 	protected int q = 1;
+	protected int pos = 0;
 	
 	protected boolean active = false;
 
@@ -38,7 +41,6 @@ public class DeltaTrader extends Connector {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
-		int pos = 0;
 		Order o;
 		Order pt;
 		Order sl;
@@ -55,7 +57,8 @@ public class DeltaTrader extends Connector {
 					(inst.getBid() > 0) &&
 					(pos == 0)) {
 				// go short
-				pos = pos - q;
+				
+				inst.setId(this.getValidId());
 				
 				o = new Order();
 				o.orderId(this.getValidId());
@@ -98,7 +101,6 @@ public class DeltaTrader extends Connector {
 					(inst.getAsk() > 0) &&
 					(pos == 0)) {
 				// go long
-				pos = pos + q;
 				
 				o = new Order();
 				o.action(Action.BUY);
@@ -143,7 +145,7 @@ public class DeltaTrader extends Connector {
 	 */
 	@Override
 	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
-		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
+		logger.verbose("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
 				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
                 ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
 			
@@ -183,6 +185,37 @@ public class DeltaTrader extends Connector {
 			break;
 		}
 	}
+	
+	/**
+	 * Order execution details handling must be overriden
+	 */
+    @Override
+    public void execDetails(int reqId, Contract contract, Execution execution) {
+
+        logger.verbose("ExecDetails. " + reqId + " - [" + contract.symbol() + "], [" +
+        		contract.secType() + "], [" + contract.currency() + "], [" +
+        		execution.execId() + "], [" + execution.orderId() + "], [" + execution.shares() + "]");
+        
+        if ((execution.orderId() == inst.getId()) && (contract.symbol() == inst.getSymbol())) {
+        	// Open position
+        	logger.log("Position opened");
+        	pos = execution.side() == "BUY" ? pos + q : pos - q;
+        }
+        
+        if ((execution.orderId() == inst.getId() + 1) && (contract.symbol() == inst.getSymbol())) {
+        	// Target reached
+        	logger.log("Target reached");
+        	pos = execution.side() == "BUY" ? pos + q : pos - q;
+        	
+        }
+        
+        if ((execution.orderId() == inst.getId() + 2) && (contract.symbol() == inst.getSymbol())) {
+        	// Stop loss fired
+        	logger.log("Stop loss fired");
+        	pos = execution.side() == "BUY" ? pos + q : pos - q;
+        }
+    }
+
 	
 	/**
 	 * Main entry point
