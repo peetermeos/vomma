@@ -9,6 +9,8 @@ import com.ib.client.OrderType;
 import com.ib.client.TickAttr;
 import com.ib.client.Types.Action;
 
+import sigma.utils.LogLevel;
+
 /**
  * The idea is to trade when bid/ask is way off 
  * balance. Extends TWS connector
@@ -192,7 +194,7 @@ public class DeltaTrader extends Connector {
     @Override
     public void execDetails(int reqId, Contract contract, Execution execution) {
 
-        logger.verbose("ExecDetails. " + reqId + " - [" + contract.symbol() + "], [" +
+        logger.log("ExecDetails. " + reqId + " - [" + contract.symbol() + "], [" +
         		contract.secType() + "], [" + contract.currency() + "], [" +
         		execution.execId() + "], [" + execution.orderId() + "], [" + execution.shares() + "]");
         
@@ -226,6 +228,21 @@ public class DeltaTrader extends Connector {
 		DeltaTrader trader;
 		
 		trader = new DeltaTrader();
+		
+		// Parse the arguments
+		for(int i = 0; i < args.length; i++) {
+			// Help
+			if(args[i].compareTo("-h") == 0) {
+				System.out.println("Help text.");
+				System.exit(0);
+			}
+			
+			// Verbose loglevel
+			if(args[i].compareTo("-v") == 0) {
+				trader.logger.setMyLogLevel(LogLevel.VERBOSE);
+			}
+		}
+				
 		trader.twsConnect();
 		try {
 			trader.run();
