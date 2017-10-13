@@ -151,7 +151,7 @@ public class DataCapture extends Connector {
     	switch(field) {
     	case 1: // bid
     		try {
-				preparedStmt.setDouble(2, value - inst.getSpot());
+				preparedStmt.setDouble(2, value - inst.getBid());
 				preparedStmt.setDouble(3, 0.0);
 				preparedStmt.setDouble(4, 0.0);
 			} catch (SQLException e) {
@@ -161,7 +161,7 @@ public class DataCapture extends Connector {
     	case 2: // ask
     		try {
     			preparedStmt.setDouble(2, 0.0);
-				preparedStmt.setDouble(3, value - inst.getBid());
+				preparedStmt.setDouble(3, value - inst.getAsk());
 				preparedStmt.setDouble(4, 0.0);
 			} catch (SQLException e) {
 				logger.error(e.toString());
@@ -171,7 +171,7 @@ public class DataCapture extends Connector {
     		try {
 				preparedStmt.setDouble(2, 0.0);
 				preparedStmt.setDouble(3, 0.0);
-				preparedStmt.setDouble(4, value - inst.getAsk());
+				preparedStmt.setDouble(4, value - inst.getSpot());
 			} catch (SQLException e) {
 				logger.error(e.toString());
 			}

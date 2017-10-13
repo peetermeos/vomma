@@ -9,7 +9,7 @@ import com.ib.client.Types.Action;
 
 /**
  * The idea is to trade when bid/ask is way off 
- * balance.
+ * balance. Extends TWS connector
  * 
  * @author Peeter Meos
  * @version 0.1
@@ -23,12 +23,20 @@ public class DeltaTrader extends Connector {
 	
 	protected boolean active = false;
 
+	/**
+	 * Standard constructor
+	 */
 	public DeltaTrader() {
 		super("Delta Trader");
 		
 		inst = new Instrument("CL", "NYMEX", "FUT", "201711");
 	}
 	
+	/**
+	 * Main processing loop for the trader
+	 * 
+	 * @throws IOException
+	 */
 	public void run() throws IOException {
 		int pos = 0;
 		Order o;
@@ -69,9 +77,10 @@ public class DeltaTrader extends Connector {
 		        sl = new Order();
 		        sl.orderId(o.orderId() + 2);
 		        sl.action("BUY");
-		        sl.orderType("LMT");
+		        sl.orderType(OrderType.STP_LMT);
 		        sl.totalQuantity(q);
 		        sl.lmtPrice(inst.getBid() + tgt);
+		        sl.auxPrice(inst.getBid() + tgt);
 		        sl.parentId(o.orderId());
 		        sl.transmit(true);
 				
@@ -82,6 +91,7 @@ public class DeltaTrader extends Connector {
 				//	this.getClient().placeOrder(getValidId() + 1, inst.getContract(), pt);
 				//	this.getClient().placeOrder(getValidId() + 2, inst.getContract(), sl);
 				}
+				logger.log("Done with trading, shutting down.");
 			}
 			
 			if ((inst.getAskSize() - inst.getBidSize() < -threshold) &&
@@ -109,9 +119,10 @@ public class DeltaTrader extends Connector {
 		        sl = new Order();
 		        sl.orderId(o.orderId() + 2);
 		        sl.action("SELL");
-		        sl.orderType("LMT");
+		        sl.orderType(OrderType.STP_LMT);
 		        sl.totalQuantity(q);
 		        sl.lmtPrice(inst.getAsk() - tgt);
+		        sl.auxPrice(inst.getAsk() - tgt);
 		        sl.parentId(o.orderId());
 		        sl.transmit(true);
 				
@@ -173,6 +184,11 @@ public class DeltaTrader extends Connector {
 		}
 	}
 	
+	/**
+	 * Main entry point
+	 * 
+	 * @param args command line parameters
+	 */
 	public static void main(String[] args) {
 		DeltaTrader trader;
 		
