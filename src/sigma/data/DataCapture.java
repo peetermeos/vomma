@@ -1,5 +1,6 @@
 package sigma.data;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -35,7 +36,7 @@ public class DataCapture extends Connector {
     String pwd = "simukitkarp";
     
     public DataCapture() {
-    	super();
+    	super("Data Capture");
     	
     	inst = new Instrument();
     }
@@ -205,11 +206,12 @@ public class DataCapture extends Connector {
     
     /**
      * Run the capture
+     * @throws IOException 
      */
-    public void run() {
+    public void run() throws IOException {
     	logger.log("Main trading loop");
-    	while(true) {}
-    	//logger.log("End of main trading loop");
+    	while(System.in.available() == 0) {}
+    	logger.log("End of main trading loop");
     }
     
 	/**
@@ -232,7 +234,11 @@ public class DataCapture extends Connector {
 		}
 		
 		tws.createInstruments();
-		tws.run();
+		try {
+			tws.run();
+		} catch (IOException e) {
+			tws.logger.error(e.toString());
+		}
 		
 		// Disconnect from tick database
 		try {

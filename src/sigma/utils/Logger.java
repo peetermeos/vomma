@@ -11,12 +11,13 @@ import java.util.Date;
  */
 public class Logger {
 	private LogLevel myLogLevel;
+	private String name;
 	
 	/**
 	 * Default constructor sets the loglevel to INFO
 	 */
 	public Logger() {
-		this(LogLevel.INFO);
+		this(LogLevel.INFO, "logger");
 	}
 	
 	/**
@@ -24,8 +25,9 @@ public class Logger {
 	 * 
 	 * @param l loglevel threshold
 	 */
-	public Logger(LogLevel l) {
+	public Logger(LogLevel l, String name) {
 		this.myLogLevel = l;
+		this.name = name;
 	}
 
 	/** 
@@ -41,7 +43,7 @@ public class Logger {
 		
 		// Only output stuff that are not higher than prescribed loglevel
 		if(l.compareTo(myLogLevel) <= 0)
-			System.out.println(dtg + " " + l.toString() + " : " + s);
+			System.out.println(dtg + ": " + this.name + " : "+ l.toString() + " : " + s);
 	}
 	
 	/**

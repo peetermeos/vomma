@@ -47,6 +47,7 @@ import sigma.utils.Logger;
 public class Connector implements EWrapper {
 	
 	protected Logger logger;
+	protected String name;
 	
 	// TWS stuff
 	private EReaderSignal signal;
@@ -80,13 +81,24 @@ public class Connector implements EWrapper {
 	 * Default constructor
 	 */
 	public Connector() {
-		logger = new Logger(LogLevel.INFO);
+		this("Sigma Trader");
+	}
+	
+	/**
+	 * Constructor with strategy name
+	 * 
+	 * @param name Strategy name
+	 */
+	public Connector(String name) {
+		logger = new Logger(LogLevel.INFO, name);
+		this.name = name;
 		
 		validId = -1;
 		
 		signal = new EJavaSignal();
 		client = new EClientSocket(this, signal);
-	}
+
+	};
 	
 	/**
 	 * Default connection to TWS
