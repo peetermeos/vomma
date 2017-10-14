@@ -25,4 +25,26 @@ public class Portfolio {
 		
 		pnl = 0.0;
 	}
+	
+	/**
+	 * Adds instrument to the portfolio
+	 * @param i
+	 */
+	public void addInstrument(Instrument i) {
+		if (positions != null) {
+			positions.add(new Position(i));
+		}
+	}
+	
+	/**
+	 * Adds trade to the portfolio
+	 * @param i Instrument traded
+	 * @param price Trade price
+	 * @param q Quantity traded
+	 */
+	public void addTrade(Instrument i, double price, int q) {
+		this.trades.add(new Trade(i, price, q));
+		
+		// TODO position update for the instrument needs to be done here
+	}
 }

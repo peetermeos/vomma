@@ -18,4 +18,17 @@ public class Trade {
 	public Trade() {
 		inst = new Instrument();
 	}
+	
+	/**
+	 * Constructor setting the instrument, price and quantity for the trade.
+	 * 
+	 * @param i Instrument traded
+	 * @param price Price traded at
+	 * @param q Quantity traded
+	 */
+	public Trade(Instrument i, double price, int q) {
+		this.inst = i;
+		this.price = price;
+		this.q = q;
+	}
 }

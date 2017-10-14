@@ -36,6 +36,8 @@ public class DeltaTrader extends Connector {
 		super("Delta Trader");
 		
 		inst = new Instrument("CL", "NYMEX", "FUT", "201711");
+		port = new Portfolio();
+		port.addInstrument(inst);
 	}
 	
 	/**
