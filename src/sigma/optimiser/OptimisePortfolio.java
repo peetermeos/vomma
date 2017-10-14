@@ -232,6 +232,11 @@ public class OptimisePortfolio extends Connector {
 	 * Main optimisation routine
 	 */
 	public void optimise() {
+		MinimiseBIP min;
+		
+		min = new MinimiseBIP();
+		
+		min.optimise();
 		
 	}
 

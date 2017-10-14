@@ -1,5 +1,7 @@
 package sigma.utils;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.Date;
 
 /**
@@ -13,6 +15,8 @@ public class Logger {
 	private LogLevel myLogLevel;
 	private String name;
 	
+	private PrintStream out;
+	
 	/**
 	 * Default constructor sets the loglevel to INFO
 	 */
@@ -24,10 +28,28 @@ public class Logger {
 	 * Constructor that sets the maximal loglevel
 	 * 
 	 * @param l loglevel threshold
+	 * @param strategy name
 	 */
 	public Logger(LogLevel l, String name) {
 		this.myLogLevel = l;
 		this.name = name;
+		this.out = System.out;
+	}
+	
+	/**
+	 * Logging to file
+	 * 
+	 * @param l loglevel threshold
+	 * @param name strategy name
+	 * @param fname logfile name
+	 */
+	public Logger(LogLevel l, String name, String fname) {
+		this(l, name);
+		try {
+			out = new PrintStream(fname);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/** 
@@ -43,7 +65,7 @@ public class Logger {
 		
 		// Only output stuff that are not higher than prescribed loglevel
 		if(l.compareTo(myLogLevel) <= 0)
-			System.out.println(dtg + ": " + this.name + " : "+ l.toString() + " : " + s);
+			out.println(dtg + ": " + this.name + " : "+ l.toString() + " : " + s);
 	}
 	
 	/**
