@@ -211,6 +211,15 @@ public class Instrument {
 	}
 	
 	/**
+	 * Sets symbol name of the instrument
+	 * 
+	 * @param s symbol name of the instrument
+	 */
+	public void setSymbol(String s) {
+		this.symbol = s;
+	}
+	
+	/**
 	 * Sets position for the instrument
 	 * 
 	 * @param l position to be set

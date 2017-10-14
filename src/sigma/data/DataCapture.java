@@ -11,6 +11,7 @@ import com.ib.client.TickAttr;
 
 import sigma.trading.Connector;
 import sigma.trading.Instrument;
+import sigma.utils.LogLevel;
 
 /**
  * This implements tick data retrieval and import into database
@@ -24,8 +25,6 @@ public class DataCapture extends Connector {
 	private Instrument inst;
 	
     private Connection connect = null;
-    //private Statement statement = null;
-    //private ResultSet resultSet = null;
     
 	protected ArrayList<Instrument> instList;
     
@@ -217,13 +216,40 @@ public class DataCapture extends Connector {
 	/**
 	 * Main entry point
 	 * 
-	 * @param args
+	 * @param args Command line arguments
 	 */
 	public static void main(String[] args) {
 		DataCapture tws;
 		
 		tws = new DataCapture();
 
+		// Parse the arguments
+		for(int i = 0; i < args.length; i++) {
+			// Help
+			if ((args[i].compareTo("-h") == 0) ||  (args[i].compareTo("--help") == 0)) {
+				System.out.println("-h --help print this help text.");
+				System.out.println("-v turn on verbose logging");
+				System.out.println("-i <symbol> <exchange> <type> <expiry> sets instrument to be captured");
+				System.exit(0);
+			}
+			
+			// Verbose loglevel
+			if(args[i].compareTo("-v") == 0) {
+				tws.logger.setMyLogLevel(LogLevel.VERBOSE);
+			}
+			
+			// Instrument specification
+			if(args[i].compareTo("-i") == 0) {
+				if(i + 5 <= args.length) {
+					tws.inst = new Instrument(args[i + 1], args[i + 2], args[i + 3], args[i + 4]);
+					i = i + 4;
+				} else {
+					tws.error("Not all arguments for instrument are specified");
+					System.exit(1);
+				}
+			}
+		}
+		
 		tws.twsConnect();
 		
 		// Connect to tick database

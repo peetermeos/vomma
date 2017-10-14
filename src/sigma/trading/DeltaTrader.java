@@ -21,6 +21,7 @@ import sigma.utils.LogLevel;
  */
 public class DeltaTrader extends Connector {
 	
+	protected Portfolio port;
 	protected Instrument inst;
 	protected int threshold = 40;
 	protected int q = 1;
