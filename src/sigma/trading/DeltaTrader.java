@@ -80,6 +80,7 @@ public class DeltaTrader extends Connector {
 		        pt.totalQuantity(q);
 		        pt.lmtPrice(inst.getBid() - tgt);
 		        pt.parentId(o.orderId());
+		        pt.ocaGroup(this.name);
 		        pt.transmit(false);
 		        
 		        sl = new Order();
@@ -90,6 +91,7 @@ public class DeltaTrader extends Connector {
 		        sl.lmtPrice(inst.getBid() + tgt);
 		        sl.auxPrice(inst.getBid() + tgt);
 		        sl.parentId(o.orderId());
+		        sl.ocaGroup(this.name);
 		        sl.transmit(true);
 				
 				
@@ -121,6 +123,7 @@ public class DeltaTrader extends Connector {
 		        pt.totalQuantity(q);
 		        pt.lmtPrice(inst.getAsk() + tgt);
 		        pt.parentId(o.orderId());
+		        pt.ocaGroup(this.name);
 		        pt.transmit(false);
 		        
 		        sl = new Order();
@@ -131,6 +134,7 @@ public class DeltaTrader extends Connector {
 		        sl.lmtPrice(inst.getAsk() - tgt);
 		        sl.auxPrice(inst.getAsk() - tgt);
 		        sl.parentId(o.orderId());
+		        sl.ocaGroup(this.name);
 		        sl.transmit(true);
 				
 				

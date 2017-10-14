@@ -404,6 +404,9 @@ public class Option {
 
 	public void setMktBid(Double mktBid) {
 		this.mktBid = mktBid;
+		if(this.getMktAsk() > 0) {
+			this.mktLast = (this.mktAsk + this.mktBid) / 2;
+		}
 	}
 
 	public Double getMktAsk() {
@@ -412,6 +415,9 @@ public class Option {
 
 	public void setMktAsk(Double mktAsk) {
 		this.mktAsk = mktAsk;
+		if(this.getSpotBid() > 0) {
+			this.mktLast = (this.mktAsk + this.mktBid) / 2;
+		}
 	}
 
 	public Double getMktLast() {
@@ -428,6 +434,11 @@ public class Option {
 
 	public void setSpotBid(Double spotBid) {
 		this.spotBid = spotBid;
+		
+		if(this.getSpotAsk() > 0) {
+			this.s = (this.spotAsk + this.spotBid) / 2;
+		}
+
 	}
 
 	public Double getSpotAsk() {
@@ -436,6 +447,9 @@ public class Option {
 
 	public void setSpotAsk(Double spotAsk) {
 		this.spotAsk = spotAsk;
+		if(this.getSpotBid() > 0) {
+			this.s = (this.spotAsk + this.spotBid) / 2;
+		}
 	}
 
 	public Double getSpotLast() {
@@ -444,6 +458,7 @@ public class Option {
 
 	public void setSpotLast(Double spotLast) {
 		this.spotLast = spotLast;
+		this.s = spotLast;
 	}
 
 	public int getUlId() {

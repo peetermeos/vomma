@@ -8,13 +8,18 @@ import com.joptimizer.optimizers.BIPOptimizationRequest;
  * General BIP minimisation
  * 
  * @author Peeter Meos
- * @version 0.1
+ * @version 0.2
  *
  */
 public class MinimiseBIP {
 
 	BIPLokbaTableMethod opt;
 	BIPOptimizationRequest or;
+	
+	
+	public void setup() {
+		
+	}
 	
 	public void optimise() {
 		or = new BIPOptimizationRequest();
@@ -28,5 +33,9 @@ public class MinimiseBIP {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public void results() {
+		
 	}
 }
