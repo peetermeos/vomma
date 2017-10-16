@@ -119,7 +119,7 @@ public class Connector implements EWrapper {
 		Random rand = new Random();
 		
 		logger.log("Connecting to TWS API at " + host + ":" + port);
-		getClient().eConnect(host, port, rand.nextInt() + 1);
+		getClient().eConnect(host, port, rand.nextInt(1000) + 1);
 		
 		while(! getClient().isConnected()) {}
 		logger.log("Connection established");
