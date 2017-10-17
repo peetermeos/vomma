@@ -84,11 +84,11 @@ public class MinimiseBIP {
 		or.setC(F1.make(ArrayUtils.toPrimitive(this.c)));
 		
 		// TODO This double[][] conversion will probably not work!
-		or.setG(F2.make((double[][]) ArrayUtils.toPrimitive(G.toArray(new Double[G.size()][G.size()]))));
+		or.setG(F2.make((double[][]) ArrayUtils.toPrimitive(G.toArray(new Double[this.c.length][G.size()]))));
 		or.setH(F1.make(ArrayUtils.toPrimitive(h.toArray(new Double[h.size()]))));
 		
 		// TODO This double[][] conversion will probably not work!
-		or.setA(F2.make((double[][]) ArrayUtils.toPrimitive(A.toArray(new Double[A.size()][A.size()]))));
+		or.setA(F2.make((double[][]) ArrayUtils.toPrimitive(A.toArray(new Double[this.c.length][A.size()]))));
 		or.setB(F1.make(ArrayUtils.toPrimitive(b.toArray(new Double[b.size()]))));
 
 		
