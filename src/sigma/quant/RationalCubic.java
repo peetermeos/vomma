@@ -5,13 +5,13 @@ public class RationalCubic {
 	private final static double DBL_MAX = Double.MAX_VALUE;
 	private final static double DBL_MIN = Double.MIN_VALUE;
 	
-	double minimum_rational_cubic_control_parameter_value = -(1 - Math.sqrt(DBL_EPSILON));
-	double maximum_rational_cubic_control_parameter_value = 2 / (DBL_EPSILON * DBL_EPSILON);
+	static double minimum_rational_cubic_control_parameter_value = -(1 - Math.sqrt(DBL_EPSILON));
+	static double maximum_rational_cubic_control_parameter_value = 2 / (DBL_EPSILON * DBL_EPSILON);
 		  
-	boolean is_zero(double x){ return Math.abs(x) < DBL_MIN; }
+	static boolean is_zero(double x){ return Math.abs(x) < DBL_MIN; }
 
 
-	double rational_cubic_interpolation(double x, double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double r) {
+	static double rational_cubic_interpolation(double x, double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double r) {
 	   double h = (x_r - x_l);
 	   if (Math.abs(h)<=0)
 	      return 0.5 * (y_l + y_r);
@@ -27,7 +27,7 @@ public class RationalCubic {
 	   return y_r * t + y_l * (1 - t);
 	}
 
-	double rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_l) {
+	static double rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_l) {
 	   double h = (x_r-x_l), numerator = 0.5*h*second_derivative_l+(d_r-d_l);
 	   if (is_zero(numerator))
 	      return 0;
@@ -37,7 +37,7 @@ public class RationalCubic {
 	   return numerator/denominator;
 	}
 
-	double rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_r) {
+	static double rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_r) {
 	   double h = (x_r-x_l), numerator = 0.5*h*second_derivative_r+(d_r-d_l);
 	   if (is_zero(numerator))
 	      return 0;
@@ -47,7 +47,7 @@ public class RationalCubic {
 	   return numerator/denominator;
 	}
 
-	double minimum_rational_cubic_control_parameter(double d_l, double d_r, double s, boolean preferShapePreservationOverSmoothness) {
+	static double minimum_rational_cubic_control_parameter(double d_l, double d_r, double s, boolean preferShapePreservationOverSmoothness) {
 	   boolean monotonic = d_l * s >= 0 && d_r * s >= 0, convex = d_l <= s && s <= d_r, concave = d_l >= s && s >= d_r;
 	   if (!monotonic && !convex && !concave) // If 3==r_non_shape_preserving_target, this means revert to standard cubic.
 	      return minimum_rational_cubic_control_parameter_value;
@@ -70,14 +70,14 @@ public class RationalCubic {
 	   return Math.max(minimum_rational_cubic_control_parameter_value, Math.max(r1, r2));
 	}
 
-	double convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_l, 
+	static double convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_l, 
 			boolean preferShapePreservationOverSmoothness) {
 	   double r = rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(x_l, x_r, y_l, y_r, d_l, d_r, second_derivative_l);
 	   double r_min = minimum_rational_cubic_control_parameter(d_l, d_r, (y_r-y_l)/(x_r-x_l), preferShapePreservationOverSmoothness);
 	   return Math.max(r,r_min);
 	}
 
-	double convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_r, 
+	static double convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(double x_l, double x_r, double y_l, double y_r, double d_l, double d_r, double second_derivative_r, 
 			boolean preferShapePreservationOverSmoothness) {
 	   double r = rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(x_l, x_r, y_l, y_r, d_l, d_r, second_derivative_r);
 	   double r_min = minimum_rational_cubic_control_parameter(d_l, d_r, (y_r-y_l)/(x_r-x_l), preferShapePreservationOverSmoothness);

@@ -1,17 +1,23 @@
 package sigma.quant;
 
 public class ErfCody {
-   double d_int(double x){ return( (x>0) ? Math.floor(x) : -Math.floor(-x) ); }
+   static double d_int(double x){ return( (x>0) ? Math.floor(x) : -Math.floor(-x) ); }
 
 	/*<       SUBROUTINE CALERF(ARG,RESULT,JINT) >*/
-	double calerf(double x, int jint) {
+	static double calerf(double x, int jint) {
 
-	   static double a[5] = { 3.1611237438705656,113.864154151050156,377.485237685302021,3209.37758913846947,.185777706184603153 };
-	   static double b[4] = { 23.6012909523441209,244.024637934444173,1282.61652607737228,2844.23683343917062 };
-	   static double c__[9] = { .564188496988670089,8.88314979438837594,66.1191906371416295,298.635138197400131,881.95222124176909,1712.04761263407058,2051.07837782607147,1230.33935479799725,2.15311535474403846e-8 };
-	   static double d__[8] = { 15.7449261107098347,117.693950891312499,537.181101862009858,1621.38957456669019,3290.79923573345963,4362.61909014324716,3439.36767414372164,1230.33935480374942 };
-	   static double p[6] = { .305326634961232344,.360344899949804439,.125781726111229246,.0160837851487422766,6.58749161529837803e-4,.0163153871373020978 };
-	   static double q[5] = { 2.56852019228982242,1.87295284992346047,.527905102951428412,.0605183413124413191,.00233520497626869185 };
+	   final double[] a = new double[] { 3.1611237438705656,113.864154151050156,377.485237685302021,3209.37758913846947,.185777706184603153 };
+	   final double[] b = new double[] { 23.6012909523441209,244.024637934444173,1282.61652607737228,2844.23683343917062 };
+	   final double[] c = new double[] { .564188496988670089,8.88314979438837594,66.1191906371416295,298.635138197400131,881.95222124176909,
+			   1712.04761263407058,2051.07837782607147,1230.33935479799725,2.15311535474403846e-8 };
+	   
+	   final double[] d = new double[] { 15.7449261107098347,117.693950891312499,537.181101862009858,1621.38957456669019,3290.79923573345963,
+			   4362.61909014324716,3439.36767414372164,1230.33935480374942 };
+	   
+	   final double[] p = new double[] { .305326634961232344,.360344899949804439,.125781726111229246,.0160837851487422766,6.58749161529837803e-4,
+			   .0163153871373020978 };
+	   
+	   final double[] q = new double[] { 2.56852019228982242,1.87295284992346047,.527905102951428412,.0605183413124413191,.00233520497626869185 };
 
 	   double zero = 0.;
 	   double half = .5;
@@ -210,27 +216,27 @@ public class ErfCody {
 	         result = Math.exp(ysq) * result;
 	      }
 	      /*<             GO TO 800 >*/
-	      goto L800;
+	      break L800;
 	      /* ------------------------------------------------------------------ */
 	      /*  Evaluate  erfc  for 0.46875 <= |X| <= 4.0 */
 	      /* ------------------------------------------------------------------ */
 	      /*<          ELSE IF (Y .LE. FOUR) THEN >*/
 	   } else if (y <= four) {
 	      /*<             XNUM = C(9)*Y >*/
-	      xnum = c__[8] * y;
+	      xnum = c[8] * y;
 	      /*<             XDEN = Y >*/
 	      xden = y;
 	      /*<             DO 120 I = 1, 7 >*/
 	      for (int i__ = 1; i__ <= 7; ++i__) {
 	         /*<                XNUM = (XNUM + C(I)) * Y >*/
-	         xnum = (xnum + c__[i__ - 1]) * y;
+	         xnum = (xnum + c[i__ - 1]) * y;
 	         /*<                XDEN = (XDEN + D(I)) * Y >*/
-	         xden = (xden + d__[i__ - 1]) * y;
+	         xden = (xden + d[i__ - 1]) * y;
 	         /*<   120       CONTINUE >*/
 	         /* L120: */
 	      }
 	      /*<             RESULT = (XNUM + C(8)) / (XDEN + D(8)) >*/
-	      result = (xnum + c__[7]) / (xden + d__[7]);
+	      result = (xnum + c[7]) / (xden + d[7]);
 	      /*<             IF (JINT .NE. 2) THEN >*/
 	      if (jint != 2) {
 	         /*<                YSQ = AINT(Y*SIXTEN)/SIXTEN >*/
@@ -254,14 +260,14 @@ public class ErfCody {
 	      if (y >= xbig) {
 	         /*<                IF ((JINT .NE. 2) .OR. (Y .GE. XMAX)) GO TO 300 >*/
 	         if (jint != 2 || y >= xmax) {
-	            goto L300;
+	            break L300;
 	         }
 	         /*<                IF (Y .GE. XHUGE) THEN >*/
 	         if (y >= xhuge) {
 	            /*<                   RESULT = SQRPI / Y >*/
 	            result = sqrpi / y;
 	            /*<                   GO TO 300 >*/
-	            goto L300;
+	            break L300;
 	            /*<                END IF >*/
 	         }
 	         /*<             END IF >*/
@@ -299,11 +305,12 @@ public class ErfCody {
 	      }
 	      /*<       END IF >*/
 	   }
+	   
 	   /* ------------------------------------------------------------------ */
 	   /*  Fix up for negative argument, erf, etc. */
 	   /* ------------------------------------------------------------------ */
 	   /*<   300 IF (JINT .EQ. 0) THEN >*/
-	L300:
+L300:
 	   if (jint == 0) {
 	      /*<             RESULT = (HALF - RESULT) + HALF >*/
 	      result = (half - result) + half;
@@ -343,7 +350,7 @@ public class ErfCody {
 	      /*<       END IF >*/
 	   }
 	   /*<   800 RETURN >*/
-	L800:
+L800: 
 	   return result;
 	   /* ---------- Last card of CALERF ---------- */
 	   /*<       END >*/
@@ -373,7 +380,7 @@ public class ErfCody {
 
 	/* S    REAL FUNCTION ERFC(X) */
 	/*<       DOUBLE PRECISION FUNCTION DERFC(X) >*/
-	double erfc_cody(double x) {
+	static double erfc_cody(double x) {
 	   /* -------------------------------------------------------------------- */
 	   /* This subprogram computes approximate values for erfc(x). */
 	   /*   (see comments heading CALERF). */
@@ -395,7 +402,7 @@ public class ErfCody {
 
 	/* S    REAL FUNCTION ERFCX(X) */
 	/*<       DOUBLE PRECISION FUNCTION DERFCX(X) >*/
-	double erfcx_cody(double x) {
+	static double erfcx_cody(double x) {
 	   /* ------------------------------------------------------------------ */
 	   /* This subprogram computes approximate values for exp(x*x) * erfc(x). */
 	   /*   (see comments heading CALERF). */

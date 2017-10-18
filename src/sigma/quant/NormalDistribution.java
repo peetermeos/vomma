@@ -4,16 +4,17 @@ public class NormalDistribution {
 	private final static double DBL_EPSILON = 0.00000000001;
 	private final static double DBL_MAX = Double.MAX_VALUE;
 	
-	double norm_cdf_asymptotic_expansion_first_threshold = -10.0;
-	double norm_cdf_asymptotic_expansion_second_threshold = -1/Math.sqrt(DBL_EPSILON);
+	private final static double norm_cdf_asymptotic_expansion_first_threshold = -10.0;
+	private final static double norm_cdf_asymptotic_expansion_second_threshold = -1/Math.sqrt(DBL_EPSILON);
 
 	
 	static final double ONE_OVER_SQRT_TWO     = 0.7071067811865475244008443621048490392848359376887;
 	static final double ONE_OVER_SQRT_TWO_PI  = 0.3989422804014326779399460599343818684758586311649;
 	static final double SQRT_TWO_PI           = 2.506628274631000502415765284811045253006986740610;
 	
+	static double norm_pdf(double x){ return ONE_OVER_SQRT_TWO_PI*Math.exp(-.5*x*x); }
 	
-	double normCdf(double z){
+	static double norm_cdf(double z){
 		   if (z <= norm_cdf_asymptotic_expansion_first_threshold) {
 		      // Asymptotic expansion for very negative z following (26.2.12) on page 408
 		      // in M. Abramowitz and A. Stegun, Pocketbook of Mathematical Functions, ISBN 3-87144818-4.
@@ -34,10 +35,10 @@ public class NormalDistribution {
 		      }
 		      return -norm_pdf(z) * sum / z;
 		   }
-		   return 0.5*ErfCody.erfc_cody( -z* ONE_OVER_SQRT_TWO );
+		   return 0.5* ErfCody.erfc_cody( -z* ONE_OVER_SQRT_TWO );
 		}
 	
-	double inverse_norm_cdf(double u){
+	static double inverse_norm_cdf(double u){
 		   //
 		   // ALGORITHM AS241  APPL. STATIST. (1988) VOL. 37, NO. 3
 		   //
