@@ -53,15 +53,18 @@ public class DeltaTrader extends Connector {
 		Double tgt = 0.02;
 		
 		// Request data
+		logger.log("Requesting instrument data");
 		this.getClient().reqMktData(this.getValidId(), inst.getContract(), "", false, false, null);	
 		
 		logger.log("Entering main loop");
-		// Endless loop
+		// Endless loop while key is pressed
 		while(System.in.available() == 0) {
 			if ((inst.getAskSize() - inst.getBidSize() > threshold) &&
 					(inst.getBid() > 0) &&
 					(pos == 0)) {
 				// go short
+				
+				this.getClient().reqIds(-1);
 				
 				inst.setId(this.getValidId());
 				
@@ -95,13 +98,13 @@ public class DeltaTrader extends Connector {
 		        sl.transmit(true);
 				
 				
-				logger.log("Placing sell order");
+				logger.log("Placing sell order @" + inst.getBid());
+				pos = pos - q;
 				if (active) {
 				//	this.getClient().placeOrder(getValidId(), inst.getContract(), o);
 				//	this.getClient().placeOrder(getValidId() + 1, inst.getContract(), pt);
 				//	this.getClient().placeOrder(getValidId() + 2, inst.getContract(), sl);
 				}
-				logger.log("Done with trading, shutting down.");
 			}
 			
 			if ((inst.getAskSize() - inst.getBidSize() < -threshold) &&
@@ -138,7 +141,8 @@ public class DeltaTrader extends Connector {
 		        sl.transmit(true);
 				
 				
-				logger.log("Placing sell order");
+				logger.log("Placing buy order @" + inst.getAsk());
+				pos = pos + q;
 				if (active) {
 				//	this.getClient().placeOrder(getValidId(), inst.getContract(), o);
 				//	this.getClient().placeOrder(getValidId() + 1, inst.getContract(), pt);
@@ -147,6 +151,7 @@ public class DeltaTrader extends Connector {
 			}
 
 		}
+		logger.log("Done with trading, shutting down.");
 	}
 	
 	/**
@@ -154,9 +159,8 @@ public class DeltaTrader extends Connector {
 	 */
 	@Override
 	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
-		logger.verbose("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
-				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
-                ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
+		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
+				", Price: " + price);
 			
 		switch(field) {
 		case 1: //bid

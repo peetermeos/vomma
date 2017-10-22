@@ -209,7 +209,13 @@ public class DataCapture extends Connector {
      */
     public void run() throws IOException {
     	logger.log("Main trading loop");
-    	while(System.in.available() == 0) {}
+    	while(System.in.available() == 0) {
+    		try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				logger.error(e.toString());
+			}
+    	}
     	logger.log("End of main trading loop");
     }
     
