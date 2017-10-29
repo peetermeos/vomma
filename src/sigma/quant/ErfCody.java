@@ -180,6 +180,7 @@ public class ErfCody {
 	   /*<       X = ARG >*/
 	   // x = *arg;
 	   /*<       Y = ABS(X) >*/
+	   Boolean break300 = false;
 	   y = Math.abs(x);
 	   /*<       IF (Y .LE. THRESH) THEN >*/
 	   if (y <= thresh) {
@@ -216,7 +217,8 @@ public class ErfCody {
 	         result = Math.exp(ysq) * result;
 	      }
 	      /*<             GO TO 800 >*/
-	      break L800;
+	      // break L800;
+	      return result;
 	      /* ------------------------------------------------------------------ */
 	      /*  Evaluate  erfc  for 0.46875 <= |X| <= 4.0 */
 	      /* ------------------------------------------------------------------ */
@@ -260,48 +262,52 @@ public class ErfCody {
 	      if (y >= xbig) {
 	         /*<                IF ((JINT .NE. 2) .OR. (Y .GE. XMAX)) GO TO 300 >*/
 	         if (jint != 2 || y >= xmax) {
-	            break L300;
+	            // break L300;
+	            break300 = true;
 	         }
 	         /*<                IF (Y .GE. XHUGE) THEN >*/
 	         if (y >= xhuge) {
 	            /*<                   RESULT = SQRPI / Y >*/
 	            result = sqrpi / y;
 	            /*<                   GO TO 300 >*/
-	            break L300;
+	            // break L300;
+	            break300 = true;
 	            /*<                END IF >*/
 	         }
 	         /*<             END IF >*/
 	      }
-	      /*<             YSQ = ONE / (Y * Y) >*/
-	      ysq = one / (y * y);
-	      /*<             XNUM = P(6)*YSQ >*/
-	      xnum = p[5] * ysq;
-	      /*<             XDEN = YSQ >*/
-	      xden = ysq;
-	      /*<             DO 240 I = 1, 4 >*/
-	      for (int i__ = 1; i__ <= 4; ++i__) {
-	         /*<                XNUM = (XNUM + P(I)) * YSQ >*/
-	         xnum = (xnum + p[i__ - 1]) * ysq;
-	         /*<                XDEN = (XDEN + Q(I)) * YSQ >*/
-	         xden = (xden + q[i__ - 1]) * ysq;
-	         /*<   240       CONTINUE >*/
-	         /* L240: */
-	      }
-	      /*<             RESULT = YSQ *(XNUM + P(5)) / (XDEN + Q(5)) >*/
-	      result = ysq * (xnum + p[4]) / (xden + q[4]);
-	      /*<             RESULT = (SQRPI -  RESULT) / Y >*/
-	      result = (sqrpi - result) / y;
-	      /*<             IF (JINT .NE. 2) THEN >*/
-	      if (jint != 2) {
-	         /*<                YSQ = AINT(Y*SIXTEN)/SIXTEN >*/
-	         double d__1 = y * sixten;
-	         ysq = d_int(d__1) / sixten;
-	         /*<                DEL = (Y-YSQ)*(Y+YSQ) >*/
-	         del = (y - ysq) * (y + ysq);
-	         /*<                RESULT = EXP(-YSQ*YSQ) * EXP(-DEL) * RESULT >*/
-	         d__1 = Math.exp(-ysq * ysq) * Math.exp(-del);
-	         result = d__1 * result;
-	         /*<             END IF >*/
+	      if (!break300) {
+		      /*<             YSQ = ONE / (Y * Y) >*/
+		      ysq = one / (y * y);
+		      /*<             XNUM = P(6)*YSQ >*/
+		      xnum = p[5] * ysq;
+		      /*<             XDEN = YSQ >*/
+		      xden = ysq;
+		      /*<             DO 240 I = 1, 4 >*/
+		      for (int i__ = 1; i__ <= 4; ++i__) {
+		         /*<                XNUM = (XNUM + P(I)) * YSQ >*/
+		         xnum = (xnum + p[i__ - 1]) * ysq;
+		         /*<                XDEN = (XDEN + Q(I)) * YSQ >*/
+		         xden = (xden + q[i__ - 1]) * ysq;
+		         /*<   240       CONTINUE >*/
+		         /* L240: */
+		      }
+		      /*<             RESULT = YSQ *(XNUM + P(5)) / (XDEN + Q(5)) >*/
+		      result = ysq * (xnum + p[4]) / (xden + q[4]);
+		      /*<             RESULT = (SQRPI -  RESULT) / Y >*/
+		      result = (sqrpi - result) / y;
+		      /*<             IF (JINT .NE. 2) THEN >*/
+		      if (jint != 2) {
+		         /*<                YSQ = AINT(Y*SIXTEN)/SIXTEN >*/
+		         double d__1 = y * sixten;
+		         ysq = d_int(d__1) / sixten;
+		         /*<                DEL = (Y-YSQ)*(Y+YSQ) >*/
+		         del = (y - ysq) * (y + ysq);
+		         /*<                RESULT = EXP(-YSQ*YSQ) * EXP(-DEL) * RESULT >*/
+		         d__1 = Math.exp(-ysq * ysq) * Math.exp(-del);
+		         result = d__1 * result;
+		         /*<             END IF >*/
+		      }	    	  
 	      }
 	      /*<       END IF >*/
 	   }
@@ -310,7 +316,6 @@ public class ErfCody {
 	   /*  Fix up for negative argument, erf, etc. */
 	   /* ------------------------------------------------------------------ */
 	   /*<   300 IF (JINT .EQ. 0) THEN >*/
-L300:
 	   if (jint == 0) {
 	      /*<             RESULT = (HALF - RESULT) + HALF >*/
 	      result = (half - result) + half;
@@ -350,7 +355,6 @@ L300:
 	      /*<       END IF >*/
 	   }
 	   /*<   800 RETURN >*/
-L800: 
 	   return result;
 	   /* ---------- Last card of CALERF ---------- */
 	   /*<       END >*/
