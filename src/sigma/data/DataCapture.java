@@ -88,8 +88,7 @@ public class DataCapture extends Connector {
 	@Override
 	public void tickPrice(int tickerId, int field, double price, TickAttr attribs) {
 		logger.log("Tick Price. Ticker Id:" + tickerId + ", Field: " + field + 
-				", Price: " + price + ", CanAutoExecute: " +  attribs.canAutoExecute() +
-                ", pastLimit: " + attribs.pastLimit() + ", pre-open: " + attribs.preOpen());
+				", Price: " + price);
 			
 		switch(field) {
 		case 1: //bid
