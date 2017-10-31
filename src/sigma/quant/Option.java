@@ -347,18 +347,38 @@ public class Option {
 		this.side = side;
 	}
 
+	/**
+	 * Returns expiry date
+	 * 
+	 * @return String expiry
+	 */
 	public String getExpiry() {
 		return expiry;
 	}
 
+	/**
+	 * Sets expiry
+	 * 
+	 * @param expiry
+	 */
 	public void setExpiry(String expiry) {
 		this.expiry = expiry;
 	}
 
+	/**
+	 * Returns symbol name of the instrument
+	 * 
+	 * @return String symbol name
+	 */
 	public String getSymbol() {
 		return symbol;
 	}
 
+	/**
+	 * Sets symbol name for the instrument
+	 * 
+	 * @param symbol
+	 */
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
 	}
