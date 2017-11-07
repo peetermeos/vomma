@@ -23,6 +23,7 @@ import sigma.utils.LogLevel;
 public class DataCapture extends Connector {
 	
 	private Instrument inst;
+	Boolean willDbConnect = false;
 	
     private Connection connect = null;
     
@@ -92,15 +93,21 @@ public class DataCapture extends Connector {
 			
 		switch(field) {
 		case 1: //bid
-			this.writeEntry(field, price);
+			if (this.willDbConnect) {
+				this.writeEntry(field, price);
+			}
 			inst.setBid(price);
 			break;
 		case 2: // ask
-			this.writeEntry(field, price);
+			if (this.willDbConnect) {
+				this.writeEntry(field, price);
+			}
 			inst.setAsk(price);
 			break;
 		case 4: //last
-			this.writeEntry(field, price);
+			if (this.willDbConnect) {
+				this.writeEntry(field, price);
+			}
 			inst.setSpot(price);
 			break;
 		default:
@@ -117,15 +124,21 @@ public class DataCapture extends Connector {
 		
 		switch(field) {
 		case 0: //bid
-			this.writeEntry(field, size);
+			if (this.willDbConnect) {
+				this.writeEntry(field, size);
+			}
 			inst.setBidSize(size);
 			break;
 		case 3: // ask
-			this.writeEntry(field, size);
+			if (this.willDbConnect) {
+				this.writeEntry(field, size);
+			}
 			inst.setAskSize(size);
 			break;
 		case 5: // last
-			this.writeEntry(field, size);
+			if (this.willDbConnect) {
+				this.writeEntry(field, size);
+			}
 			inst.setSpotSize(size);
 			break;
 		default:
@@ -234,6 +247,7 @@ public class DataCapture extends Connector {
 			if ((args[i].compareTo("-h") == 0) ||  (args[i].compareTo("--help") == 0)) {
 				System.out.println("-h --help print this help text.");
 				System.out.println("-v turn on verbose logging");
+				System.out.println("-s --standalone will not connect to remote database");
 				System.out.println("-i <symbol> <exchange> <type> <expiry> sets instrument to be captured");
 				System.exit(0);
 			}
@@ -241,6 +255,11 @@ public class DataCapture extends Connector {
 			// Verbose loglevel
 			if(args[i].compareTo("-v") == 0) {
 				tws.logger.setMyLogLevel(LogLevel.VERBOSE);
+			}
+			
+			// Verbose loglevel
+			if ((args[i].compareTo("-s") == 0) || (args[i].compareTo("--standalone") == 0)) {
+				tws.willDbConnect = false;
 			}
 			
 			// Instrument specification
@@ -259,7 +278,9 @@ public class DataCapture extends Connector {
 		
 		// Connect to tick database
 		try {
-			tws.dbConnect();
+			if (tws.willDbConnect) {
+				tws.dbConnect();
+			}
 		} catch (Exception e) {
 			tws.logger.error(e.toString());
 		}
@@ -273,7 +294,9 @@ public class DataCapture extends Connector {
 		
 		// Disconnect from tick database
 		try {
-			tws.dbDisconnect();
+			if (tws.willDbConnect) {
+				tws.dbDisconnect();
+			}
 		} catch (Exception e) {
 			tws.logger.error(e.toString());
 		}
