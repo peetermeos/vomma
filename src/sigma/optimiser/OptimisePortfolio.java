@@ -32,6 +32,7 @@ import sigma.trading.Instrument;
  *
  */
 public class OptimisePortfolio extends Connector {
+	
 	protected Instrument inst;
 	protected ArrayList<Option> portfolio;
 	
@@ -44,7 +45,7 @@ public class OptimisePortfolio extends Connector {
 		super();
 		
 		Double[] strikeArray = {45.0 ,50.0, 55.0};
-		String[] expiryArray = {"201711", "201712"};
+		String[] expiryArray = {"201801", "201802"};
 		
 		portfolio = new ArrayList<>();
 		
@@ -65,8 +66,7 @@ public class OptimisePortfolio extends Connector {
         // Find matching entry in option surface
         // and populate local symbol and last trading date
         if(reqId < 1000) {
-        	portfolio.get(reqId).setLastTradeDate(contractDetails.contract().lastTradeDateOrContractMonth());
-        	portfolio.get(reqId).setLocalSymbol(contractDetails.contract().localSymbol());
+        	portfolio.get(reqId).setExpiry(contractDetails.contract().lastTradeDateOrContractMonth());
         }
 	}
 	
@@ -83,15 +83,16 @@ public class OptimisePortfolio extends Connector {
 		
 		// Loop through portfolio entries and request contract info
 		logger.log("Requesting option surface");
-		for(int i=0; i< portfolio.size(); i++) {
+		for(int i=0; i < portfolio.size(); i++) {
 			portfolio.get(i).setId(i);
 			this.getClient().reqContractDetails(i, portfolio.get(i).getContract());
 		}
 		
+		// Wait until we have the data for the entire surface
 		while(!allDone) {
 			allDone = true;
 			for(Option o: portfolio) {
-				if(o.getLocalSymbol() == "") {
+				if(o.getBid() == -1 || o.getAsk() == -1) {
 					allDone = false;
 				}
 			}
@@ -115,17 +116,26 @@ public class OptimisePortfolio extends Connector {
 			for(int s=0; s<used.size(); s++) {
 				if(used.get(s).compareTo(c.lastTradeDateOrContractMonth()) == 0) {
 					allDone = true;
-					portfolio.get(i).setUlId(2000 + s);
+					portfolio.get(i).getUl().setId(2000 + s);
 				}
 			}
 			
 			// If we have not requested data for that one
 			if (!allDone) {
 				used.add(portfolio.get(i).getUnderlying().lastTradeDateOrContractMonth());
-				portfolio.get(i).setUlId(ulId);
+				portfolio.get(i).getUl().setId(ulId);
 				this.getClient().reqMktData(ulId, c, "", true, false, null);
 				ulId++;
 			}
+		}
+	}
+	
+	/**
+	 * Prints out the option surface
+	 */
+	public void printSurface() {
+		for (Option o: portfolio) {
+			logger.log(o.getSymbol() + " " + o.getExpiry());
 		}
 	}
 	
@@ -183,13 +193,13 @@ public class OptimisePortfolio extends Connector {
 		if((tickerId >= 1000) && (tickerId < 2000)) {
 			switch(field) {
 			case 1: // bid
-				portfolio.get(tickerId - 1000).setMktBid(price);
+				portfolio.get(tickerId - 1000).setBid(price);
 				break;
 			case 2: // ask
-				portfolio.get(tickerId - 1000).setMktAsk(price);
+				portfolio.get(tickerId - 1000).setAsk(price);
 				break;
 			case 4: // last
-				portfolio.get(tickerId - 1000).setMktLast(price);
+				portfolio.get(tickerId - 1000).setPrice(price);
 				break;
 			default:
 				break;
@@ -201,18 +211,18 @@ public class OptimisePortfolio extends Connector {
 			switch(field) {
 			case 1: // bid
 				for(Option o: portfolio)
-					if(o.getUlId() == tickerId)
-						o.setSpotBid(price);
+					if(o.getUl().getId() == tickerId)
+						o.getUl().setBid(price);
 				break;
 			case 2: // ask
 				for(Option o: portfolio)
-					if(o.getUlId() == tickerId)
-						o.setSpotAsk(price);
+					if(o.getUl().getId() == tickerId)
+						o.getUl().setAsk(price);
 				break;
 			case 4: // last
 				for(Option o: portfolio)
-					if(o.getUlId() == tickerId)
-						o.setSpotLast(price);
+					if(o.getUl().getId() == tickerId)
+						o.getUl().setPrice(price);
 				break;
 			default:
 				break;
@@ -257,6 +267,10 @@ public class OptimisePortfolio extends Connector {
 		} catch (IOException e) {
 			o.logger.error(e.toString());
 		}
+		// For debugging print out the surface
+		o.printSurface();
+		
+		// And we are done
 		o.twsDisconnect();
 	}
 

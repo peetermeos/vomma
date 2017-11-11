@@ -13,8 +13,7 @@ import cern.jet.random.tdouble.engine.MersenneTwister64;
  * @version 0.1
  *
  */
-public class Option {
-	int id;
+public class Option extends Instrument {
 	
 	// Option valuation parameters
 	Double s;     // Spot
@@ -25,28 +24,16 @@ public class Option {
 	Double d;     // Dividends
 	OptSide side; // Side
 	
+	Future ul;
+	
 	String expiry;
-	String symbol;
-	String exchange;
-	String localSymbol;
-	String ulLocalSymbol;
-	String lastTradeDate;
-	
-	int ulId;
-	
-	Double mktBid;
-	Double mktAsk;
-	Double mktLast;
-	
-	Double spotBid;
-	Double spotAsk;
-	Double spotLast;
-
 	
 	/**
 	 * Default constructor, zero to all parameters
 	 */
 	public Option() {
+		super();
+		
 		s = 0.0;
 		k = 0.0;
 		t = 0.0;
@@ -55,12 +42,8 @@ public class Option {
 		d = 0.0;
 		side = OptSide.CALL;
 		
-		
-		this.localSymbol = "";
-		this.mktBid = -1.0;
-		this.mktAsk = -1.0;
-		this.mktLast = -1.0;
-
+		secType = "FOP";
+		this.ul = new Future();
 	}
 	
 	/**
@@ -76,6 +59,7 @@ public class Option {
 		this.symbol = symbol;
 		this.side = side;
 		this.k = k;
+		
 		this.expiry = expiry;
 	}
 	
@@ -365,128 +349,13 @@ public class Option {
 		this.expiry = expiry;
 	}
 
-	/**
-	 * Returns symbol name of the instrument
-	 * 
-	 * @return String symbol name
-	 */
-	public String getSymbol() {
-		return symbol;
+	public Future getUl() {
+		return ul;
 	}
 
-	/**
-	 * Sets symbol name for the instrument
-	 * 
-	 * @param symbol
-	 */
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
+	public void setUl(Future ul) {
+		this.ul = ul;
 	}
 
-	public String getExchange() {
-		return exchange;
-	}
 
-	public void setExchange(String exchange) {
-		this.exchange = exchange;
-	}
-
-	public String getLocalSymbol() {
-		return localSymbol;
-	}
-
-	/**
-	 * Based on local option symbol sets local symbol 
-	 * for option and its underlying
-	 * 
-	 * @param localSymbol
-	 */
-	public void setLocalSymbol(String localSymbol) {
-		String[] parts;
-		
-		parts = localSymbol.split(" ");
-		
-		this.localSymbol = localSymbol;
-		this.ulLocalSymbol = parts[0];
-	}
-
-	public String getLastTradeDate() {
-		return lastTradeDate;
-	}
-
-	public void setLastTradeDate(String lastTradeDate) {
-		this.lastTradeDate = lastTradeDate;
-	}
-
-	public Double getMktBid() {
-		return mktBid;
-	}
-
-	public void setMktBid(Double mktBid) {
-		this.mktBid = mktBid;
-		if(this.getMktAsk() > 0) {
-			this.mktLast = (this.mktAsk + this.mktBid) / 2;
-		}
-	}
-
-	public Double getMktAsk() {
-		return mktAsk;
-	}
-
-	public void setMktAsk(Double mktAsk) {
-		this.mktAsk = mktAsk;
-		if(this.getSpotBid() > 0) {
-			this.mktLast = (this.mktAsk + this.mktBid) / 2;
-		}
-	}
-
-	public Double getMktLast() {
-		return mktLast;
-	}
-
-	public void setMktLast(Double mktLast) {
-		this.mktLast = mktLast;
-	}
-
-	public Double getSpotBid() {
-		return spotBid;
-	}
-
-	public void setSpotBid(Double spotBid) {
-		this.spotBid = spotBid;
-		
-		if(this.getSpotAsk() > 0) {
-			this.s = (this.spotAsk + this.spotBid) / 2;
-		}
-
-	}
-
-	public Double getSpotAsk() {
-		return spotAsk;
-	}
-
-	public void setSpotAsk(Double spotAsk) {
-		this.spotAsk = spotAsk;
-		if(this.getSpotBid() > 0) {
-			this.s = (this.spotAsk + this.spotBid) / 2;
-		}
-	}
-
-	public Double getSpotLast() {
-		return spotLast;
-	}
-
-	public void setSpotLast(Double spotLast) {
-		this.spotLast = spotLast;
-		this.s = spotLast;
-	}
-
-	public int getUlId() {
-		return ulId;
-	}
-
-	public void setUlId(int ulId) {
-		this.ulId = ulId;
-	}
-	
 }
