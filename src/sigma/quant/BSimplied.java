@@ -101,7 +101,7 @@ class BSImplied{
 			Status = "undefined";
 			return;
 		}
-        // Create instace of class holding function to be minimised
+        // Create instance of class holding function to be minimised
         BS_f_of_sigma  funct = new BS_f_of_sigma (s, X, t, price);
 
 		UnivariateRealSolverFactory factory = UnivariateRealSolverFactory.newInstance();

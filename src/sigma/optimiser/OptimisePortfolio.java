@@ -143,7 +143,8 @@ public class OptimisePortfolio extends Connector {
 		               o.getExpiry() + " " + 
 					   o.getSide().toString() + 
 					   " price: " + o.getPrice() +
-					   " ul: " + o.getUl().getPrice()
+					   " ul: " + o.getUl().getPrice() +
+					   " vol: " + o.getSigma()
 		               );
 		}
 	}
@@ -254,6 +255,8 @@ public class OptimisePortfolio extends Connector {
 	 */
 	public void calcVol() {
 		for (Option o: portfolio) {
+			
+			logger.log("Calculating implied volatility for instrument " + o.getId());
 			o.calcVol();
 		}
 	}

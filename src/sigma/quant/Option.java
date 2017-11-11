@@ -1,5 +1,12 @@
 package sigma.quant;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
 import com.ib.client.Contract;
 import com.ib.client.Types.SecType;
 
@@ -92,10 +99,26 @@ public class Option extends Instrument {
 	public void calcVol() {
 		this.sigma = 0.0;
 		BSImplied bs;
+		Calendar cal = Calendar.getInstance();
+		Date t0;
+		Date t1 = new Date();
 		
+		// First we need to find the expiry time
+		t0 = cal.getTime();
+		
+		DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+		
+		try {
+			t1 = format.parse(this.expiry);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	
+		this.t = (double)(t1.getTime() - t0.getTime()) / (365.0 * 24.0 * 60.0 * 60.0 * 1000.0);
+		
+		// Now calculate IV
 		bs = new BSImplied(this.ul.getPrice(), 
-				this.k, r, s, t, (side == OptSide.PUT));
-		
+				           this.k, this.r, this.price, t, (side == OptSide.PUT));
 		bs.findImplied();
 		this.sigma = bs.Value;
 	}
@@ -369,6 +392,14 @@ public class Option extends Instrument {
 
 	public void setUl(Future ul) {
 		this.ul = ul;
+	}
+
+	public Double getSigma() {
+		return sigma;
+	}
+
+	public void setSigma(Double sigma) {
+		this.sigma = sigma;
 	}
 
 
