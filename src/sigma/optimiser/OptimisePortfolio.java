@@ -62,7 +62,7 @@ public class OptimisePortfolio extends Connector {
 	 */
 	@Override
 	public void contractDetails(int reqId, ContractDetails contractDetails) {
-        logger.log(EWrapperMsgGenerator.contractDetails(reqId, contractDetails));
+        logger.verbose(EWrapperMsgGenerator.contractDetails(reqId, contractDetails));
         // Find matching entry in option surface
         // and populate local symbol and last trading date
         if(reqId < 1000) {
@@ -89,21 +89,25 @@ public class OptimisePortfolio extends Connector {
 		}
 		
 		// Wait until we have the data for the entire surface
+		/*
 		while(!allDone) {
 			allDone = true;
 			for(Option o: portfolio) {
-				if(o.getBid() == -1 || o.getAsk() == -1) {
+				if(o.getExpiry() == "") {
 					allDone = false;
 				}
 			}
 		}
+		*/
 		
 		// Request market data for options
-		for(int i=0; i < portfolio.size(); i++) {
+		logger.log("Request market data for options");
+		for(int i = 0; i < portfolio.size(); i++) {
 			this.getClient().reqMktData(1000 + i,  portfolio.get(i).getContract(), "", true, false, null);
 		}
 		
 		// Done with options, now underlyings
+		logger.log("Done with options, now underlyings");
 		ArrayList<String> used = new ArrayList<>();
 		Contract c;
 		int ulId = 2000;
@@ -135,7 +139,12 @@ public class OptimisePortfolio extends Connector {
 	 */
 	public void printSurface() {
 		for (Option o: portfolio) {
-			logger.log(o.getSymbol() + " " + o.getExpiry());
+			logger.log(o.getSymbol() + " " + 
+		               o.getExpiry() + " " + 
+					   o.getSide().toString() + 
+					   " price: " + o.getPrice() +
+					   " ul: " + o.getUl().getPrice()
+		               );
 		}
 	}
 	
@@ -199,6 +208,7 @@ public class OptimisePortfolio extends Connector {
 				portfolio.get(tickerId - 1000).setAsk(price);
 				break;
 			case 4: // last
+			case 9: // close	
 				portfolio.get(tickerId - 1000).setPrice(price);
 				break;
 			default:
@@ -220,6 +230,7 @@ public class OptimisePortfolio extends Connector {
 						o.getUl().setAsk(price);
 				break;
 			case 4: // last
+			case 9: // close
 				for(Option o: portfolio)
 					if(o.getUl().getId() == tickerId)
 						o.getUl().setPrice(price);
@@ -236,6 +247,15 @@ public class OptimisePortfolio extends Connector {
 	@Override
 	public void positionEnd() {
 		this.done = true;	
+	}
+	
+	/**
+	 * Calculates option chain volatilities
+	 */
+	public void calcVol() {
+		for (Option o: portfolio) {
+			o.calcVol();
+		}
 	}
 	
 	/** 
@@ -267,6 +287,10 @@ public class OptimisePortfolio extends Connector {
 		} catch (IOException e) {
 			o.logger.error(e.toString());
 		}
+		
+		// Calculate volatilities
+		o.calcVol();
+		
 		// For debugging print out the surface
 		o.printSurface();
 		

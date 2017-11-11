@@ -87,6 +87,20 @@ public class Option extends Instrument {
 	}
 	
 	/**
+	 * Calculates volatility for the option
+	 */
+	public void calcVol() {
+		this.sigma = 0.0;
+		BSImplied bs;
+		
+		bs = new BSImplied(this.ul.getPrice(), 
+				this.k, r, s, t, (side == OptSide.PUT));
+		
+		bs.findImplied();
+		this.sigma = bs.Value;
+	}
+	
+	/**
 	 * Returns Normal Distribution CDF (x)
 	 * 
 	 * @param x Value of x
