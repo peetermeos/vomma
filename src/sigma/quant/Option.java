@@ -402,5 +402,17 @@ public class Option extends Instrument {
 		this.sigma = sigma;
 	}
 
+	public Double getStrike() {
+		return this.k;
+	}
+
+	/**
+	 * Calculates greeks for the option
+	 */
+	public void calcGreeks() {
+		
+		
+	}
+
 
 }
