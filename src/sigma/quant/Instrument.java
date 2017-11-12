@@ -1,12 +1,20 @@
 package sigma.quant;
 
+import java.io.Serializable;
+
 /**
  * Simple generic instrument class
  * 
  * @author Peeter Meos
  * @version 0.1
  */
-public class Instrument {
+public class Instrument implements Serializable {
+
+
+	/**
+	 * Serial version UID
+	 */
+	private static final long serialVersionUID = 6462342965485399405L;
 
 	protected int id;
 	

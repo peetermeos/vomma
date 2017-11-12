@@ -1,6 +1,11 @@
 package sigma.optimiser;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import org.gnu.glpk.GLPK;
@@ -355,7 +360,7 @@ public class OptimisePortfolio extends Connector {
             if (ret == 0) {
                writeLpSolution(lp);
             } else {
-                System.out.println("The problem could not be solved");
+                logger.error("The problem could not be solved");
             }
 
             // Free memory
@@ -366,7 +371,8 @@ public class OptimisePortfolio extends Connector {
 	}
 	
 	/**
-	 * 
+	 * Prints out the LP solution
+	 *  
 	 * @param lp
 	 */
 	public void writeLpSolution(glp_prob lp) {
@@ -377,29 +383,54 @@ public class OptimisePortfolio extends Connector {
 
         name = GLPK.glp_get_obj_name(lp);
         val = GLPK.glp_get_obj_val(lp);
-        System.out.print(name);
-        System.out.print(" = ");
-        System.out.println(val);
+        logger.log(name + " = " + val);
+
         n = GLPK.glp_get_num_cols(lp);
         for (i = 1; i <= n; i++) {
             name = GLPK.glp_get_col_name(lp, i);
             val = GLPK.glp_get_col_prim(lp, i);
-            System.out.print(name);
-            System.out.print(" = ");
-            System.out.println(val);
+            logger.log(name + " = " + val);
         }
     }
 	
 	/**
-	 * Calculates greeks for the portfolio
+	 * Saves a portfolio snapshot to a file
+	 * 
+	 * @param fname Filename string
+	 * @throws IOException
 	 */
-	private void calcGreeks() {
-		for (Option o: portfolio) {
-			//o.calcGreeks();
+	public void savePortfolio(String fname) throws IOException {
+		FileOutputStream fos;
+		ObjectOutputStream oos;
+
+		logger.log("Saving portfolio to " + fname);
+		fos = new FileOutputStream(fname);
+		oos = new ObjectOutputStream(fos);
+		oos.writeObject(this.portfolio);
+		oos.close();
+		fos.close();
+	}
+	
+	/**
+	 * Loads saved portfolio from a file
+	 * 
+	 * @param fname Filename string
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 */
+	@SuppressWarnings("unchecked")
+	public void loadPortfolio(String fname) throws ClassNotFoundException, IOException {
+		FileInputStream fis = new FileInputStream(fname);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		
+		if (ois.readObject() instanceof ArrayList) {
+			portfolio = (ArrayList<Option>) ois.readObject();	
 		}
 		
+		ois.close();
+		fis.close();
 	}
-
+	
 	/**
 	 * Main entry point
 	 * 
