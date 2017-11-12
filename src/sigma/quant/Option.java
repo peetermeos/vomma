@@ -22,6 +22,11 @@ import cern.jet.random.tdouble.engine.MersenneTwister64;
  */
 public class Option extends Instrument {
 	
+	/**
+	 * Serial ID
+	 */
+	//private static final long serialVersionUID = 6122198818823516634L;
+	
 	// Option valuation parameters
 	Double s;     // Spot
 	Double k;     // Strike
@@ -91,6 +96,11 @@ public class Option extends Instrument {
 		this.r = r;
 		this.d = d;
 		this.side = side;
+		this.ul.price = s;
+	}
+	
+	private Double s() {
+		return this.ul.price;
 	}
 	
 	/**
@@ -164,7 +174,7 @@ public class Option extends Instrument {
 	 * @return Double d1 value
 	 */
 	private Double d1() {
-		return((Math.log(s / k) + t * (r + 0.5 * sigma * sigma)) / (sigmatau()));
+		return((Math.log(s() / k) + t * (r + 0.5 * sigma * sigma)) / (sigmatau()));
 	}
 	
 	/**
@@ -182,7 +192,7 @@ public class Option extends Instrument {
 	 * @return Double Call price
 	 */
 	public Double call() {
-		return(s * cdf(d1()) - Math.exp(-r * t) * k * cdf(d2()));
+		return(s() * cdf(d1()) - Math.exp(-r * t) * k * cdf(d2()));
 	}
 	
 	/**
@@ -191,7 +201,7 @@ public class Option extends Instrument {
 	 * @return Double Put price
 	 */
 	public Double put() {
-		return(call() - s + k * Math.exp(-r * t));
+		return(call() - s() + k * Math.exp(-r * t));
 	}
 	
 	/**
@@ -213,7 +223,7 @@ public class Option extends Instrument {
 	 * @return gamma of the option
 	 */
 	public Double gamma() {
-		return(Math.exp(-d * t) * phi(d1()) / (s * sigmatau()));
+		return(Math.exp(-d * t) * phi(d1()) / (s() * sigmatau()));
 	}
 	
 	/**
@@ -222,7 +232,7 @@ public class Option extends Instrument {
 	 * @return vega of the option
 	 */
 	public Double vega() {
-		return(s * Math.exp(-d * t) * phi(d1()) * Math.sqrt(t));
+		return(s() * Math.exp(-d * t) * phi(d1()) * Math.sqrt(t));
 	}
 	
 	/**
@@ -235,9 +245,9 @@ public class Option extends Instrument {
 		Double y;
 		Double z;
 		
-		x = -Math.exp(-d * t) * (s * phi(d1()) * sigma) / (2 * Math.sqrt(t));
+		x = -Math.exp(-d * t) * (s() * phi(d1()) * sigma) / (2 * Math.sqrt(t));
 		y = r * k * Math.exp(-r * t);
-		z = d * s * Math.exp(-d * t);
+		z = d * s() * Math.exp(-d * t);
 		
 		if(side == OptSide.CALL) {
 			return(x - y * cdf(d2()) + z * cdf(d1()));
@@ -276,10 +286,10 @@ public class Option extends Instrument {
 		Double z;
 		Double u;
 		
-		x = -(s * sigma * phi(d1())) / (4 * t * Math.sqrt(t)) * (1 + (2 * (r - d) * t - d2() * sigmatau()) / sigmatau() * d1());
+		x = -(s() * sigma * phi(d1())) / (4 * t * Math.sqrt(t)) * (1 + (2 * (r - d) * t - d2() * sigmatau()) / sigmatau() * d1());
 		y = r * r * k * Math.exp(-r * t) * cdf(d2());
-		z = d * d * s * Math.exp(-d * t) * cdf(d1());
-		u = s * Math.exp(-d * t) * phi(d1()) * (2 * (r - d) * (r - d) * t - d2() * sigmatau()) / (2 * t * sigmatau());
+		z = d * d * s() * Math.exp(-d * t) * cdf(d1());
+		u = s() * Math.exp(-d * t) * phi(d1()) * (2 * (r - d) * (r - d) * t - d2() * sigmatau()) / (2 * t * sigmatau());
 		
 		if(side == OptSide.CALL) {
 			return(x - y + z + u);
@@ -294,7 +304,7 @@ public class Option extends Instrument {
 	 * @return color of the option
 	 */
 	public Double color() {
-		return(-Math.exp(-d * t) * phi(d1()) / (2 * s * t * sigmatau()) * (2 * d * t + 1 + (2 * (r - d) * t - d2() * sigmatau()) / (sigmatau()) * d1()));
+		return(-Math.exp(-d * t) * phi(d1()) / (2 * s() * t * sigmatau()) * (2 * d * t + 1 + (2 * (r - d) * t - d2() * sigmatau()) / (sigmatau()) * d1()));
 	}
 	
 	/**
@@ -303,7 +313,7 @@ public class Option extends Instrument {
 	 * @return speed of the option
 	 */
 	public Double speed() {
-		return(-gamma() / s * (d1() / sigmatau() + 1));
+		return(-gamma() / s() * (d1() / sigmatau() + 1));
 	}
 
 	/**

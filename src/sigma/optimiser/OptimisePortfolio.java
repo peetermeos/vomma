@@ -15,6 +15,7 @@ import org.gnu.glpk.SWIGTYPE_p_double;
 import org.gnu.glpk.SWIGTYPE_p_int;
 import org.gnu.glpk.glp_iocp;
 import org.gnu.glpk.glp_prob;
+import org.gnu.glpk.glp_smcp;
 
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -156,9 +157,12 @@ public class OptimisePortfolio extends Connector {
 		               o.getExpiry() + " " + 
 		               o.getStrike() + " " +
 					   o.getSide().toString() + 
-					   " price: " + o.getPrice() +
+					   " price: " + String.format("%4.3f", o.getPrice()) +
 					   " ul: " + o.getUl().getPrice() +
-					   " vol: " + o.getSigma()
+					   " vol: " + String.format("%4.3f", o.getSigma()) + 
+					   " delta: " + String.format("%4.3f", o.delta()) +
+					   " gamma: " + String.format("%4.3f", o.gamma()) +
+					   " theta: " + String.format("%4.3f", o.theta())
 		               );
 		}
 	}
@@ -270,7 +274,7 @@ public class OptimisePortfolio extends Connector {
 	public void calcVol() {
 		for (Option o: portfolio) {
 			
-			logger.log("Calculating implied volatility for instrument " + o.getId());
+			logger.verbose("Calculating implied volatility for instrument " + o.getId());
 			o.calcVol();
 		}
 	}
@@ -280,87 +284,101 @@ public class OptimisePortfolio extends Connector {
 	 */
 	public void optimise() {
         glp_prob lp;
-        glp_iocp parm;
-        //glp_smcp parm;
+        //glp_iocp parm;
+        glp_smcp parm;
         SWIGTYPE_p_int ind;
         SWIGTYPE_p_double val;
         int ret;
         
+        // Bounds
+        int maxPos = 5;
+        
         try {
             // Create problem
             lp = GLPK.glp_create_prob();
-            System.out.println("Problem created");
-            GLPK.glp_set_prob_name(lp, "myProblem");
-
-            // Define columns
-            GLPK.glp_add_cols(lp, 3);
-            GLPK.glp_set_col_name(lp, 1, "x1");
-            GLPK.glp_set_col_kind(lp, 1, GLPKConstants.GLP_IV);
-            GLPK.glp_set_col_bnds(lp, 1, GLPKConstants.GLP_DB, 0, 1);
-            GLPK.glp_set_col_name(lp, 2, "x2");
-            GLPK.glp_set_col_kind(lp, 2, GLPKConstants.GLP_CV);
-            GLPK.glp_set_col_bnds(lp, 2, GLPKConstants.GLP_DB, 0, 3);
-            GLPK.glp_set_col_name(lp, 3, "x3");
-            GLPK.glp_set_col_kind(lp, 3, GLPKConstants.GLP_CV);
-            GLPK.glp_set_col_bnds(lp, 3, GLPKConstants.GLP_DB, 0, 1);
-
-            // Create constraints
-
-            // Allocate memory
-            ind = GLPK.new_intArray(3);
-            val = GLPK.new_doubleArray(3);
-
-            // Create rows
-            GLPK.glp_add_rows(lp, 2);
-
-            // Set row details
-            GLPK.glp_set_row_name(lp, 1, "c1");
-            GLPK.glp_set_row_bnds(lp, 1, GLPKConstants.GLP_DB, 0, 0.2);
-            GLPK.intArray_setitem(ind, 1, 1);
-            GLPK.intArray_setitem(ind, 2, 2);
-            GLPK.doubleArray_setitem(val, 1, 1.);
-            GLPK.doubleArray_setitem(val, 2, -.5);
-            GLPK.glp_set_mat_row(lp, 1, 2, ind, val);
-
-            GLPK.glp_set_row_name(lp, 2, "c2");
-            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_UP, 0, 0.4);
-            GLPK.intArray_setitem(ind, 1, 2);
-            GLPK.intArray_setitem(ind, 2, 3);
-            GLPK.doubleArray_setitem(val, 1, -1.);
-            GLPK.doubleArray_setitem(val, 2, 1.);
-            GLPK.glp_set_mat_row(lp, 2, 2, ind, val);
-
-            // Free memory
-            GLPK.delete_intArray(ind);
-            GLPK.delete_doubleArray(val);
+            logger.log("Problem created");
+            GLPK.glp_set_prob_name(lp, "minGamma");
 
             // Define objective
             GLPK.glp_set_obj_name(lp, "z");
             GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MIN);
             GLPK.glp_set_obj_coef(lp, 0, 1.);
-            GLPK.glp_set_obj_coef(lp, 1, -.5);
-            GLPK.glp_set_obj_coef(lp, 2, .5);
-            GLPK.glp_set_obj_coef(lp, 3, -1);
+
+            
+            // Define columns one for every portfolio entry
+            // Add objective function coefficients
+            GLPK.glp_add_cols(lp, portfolio.size());
+            for(int i = 0; i < portfolio.size(); i++) {
+            	GLPK.glp_set_col_name(lp, i + 1, "x" + portfolio.get(i).getId());
+                GLPK.glp_set_col_kind(lp, i + 1, GLPKConstants.GLP_IV);
+                GLPK.glp_set_col_bnds(lp, i + 1, GLPKConstants.GLP_DB, 0, maxPos);
+                
+                // Gammas to the objective function
+                GLPK.glp_set_obj_coef(lp, i + 1, portfolio.get(i).gamma());
+            }
+            
+            // Create constraints
+
+            // Allocate memory
+            ind = GLPK.new_intArray(portfolio.size());
+            val = GLPK.new_doubleArray(portfolio.size());
+
+            // Create rows
+            GLPK.glp_add_rows(lp, 3);
+
+            // Set row details
+            
+            // Bounded theta
+            GLPK.glp_set_row_name(lp, 1, "theta");
+            GLPK.glp_set_row_bnds(lp, 1, GLPKConstants.GLP_LO, 0.2 * 365, 0.0);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, -portfolio.get(i - 1).theta());
+            }
+            GLPK.glp_set_mat_row(lp, 1, portfolio.size(), ind, val);
+
+            // Bounded delta
+            GLPK.glp_set_row_name(lp, 2, "delta");
+            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_DB, -0.9, 0.9);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, portfolio.get(i - 1).delta());
+            }           
+            GLPK.glp_set_mat_row(lp, 2, portfolio.size(), ind, val);
+            
+            // Max positions open
+            GLPK.glp_set_row_name(lp, 3, "open positions");
+            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_DB, 3, 20);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, 1.0);
+            }           
+            GLPK.glp_set_mat_row(lp, 3, portfolio.size(), ind, val);
+
+            // Free memory
+            GLPK.delete_intArray(ind);
+            GLPK.delete_doubleArray(val);
 
             // Write model to file
-            // GLPK.glp_write_lp(lp, null, "lp.lp");
+            GLPK.glp_write_lp(lp, null, "lp.lp");
 
-            // Solve model
-            //parm = new glp_smcp();
-            //GLPK.glp_init_smcp(parm);
-            //ret = GLPK.glp_simplex(lp, parm);
+            // Solve model as LP
+             parm = new glp_smcp();
+             GLPK.glp_init_smcp(parm);
+             ret = GLPK.glp_simplex(lp, parm);
             
-            parm = new glp_iocp();
-            GLPK.glp_init_iocp(parm);
-            parm.setPresolve(GLPKConstants.GLP_ON);
-            //  GLPK.glp_write_lp(lp, null, "yi.lp");
-            ret = GLPK.glp_intopt(lp, parm);
+            // Solve model as MIP
+            //parm = new glp_iocp();
+            //GLPK.glp_init_iocp(parm);
+            //parm.setPresolve(GLPKConstants.GLP_ON);
+            //GLPK.glp_write_lp(lp, null, "yi.lp");
+            //ret = GLPK.glp_intopt(lp, parm);
 
             // Retrieve solution
             if (ret == 0) {
                writeLpSolution(lp);
             } else {
-                logger.error("The problem could not be solved");
+               logger.error("The problem could not be solved");
             }
 
             // Free memory
@@ -431,12 +449,36 @@ public class OptimisePortfolio extends Connector {
 	}
 	
 	/**
+	 * Calculates portfolio greeks and outputs them 
+	 */
+	public void portfolioSummary() {
+		Double totDelta = 0.0;
+		Double totGamma = 0.0;
+		Double totTheta = 0.0;
+		
+		logger.log("Porftolio summary");
+		
+		for(int i = 0; i < portfolio.size(); i++) {
+			totDelta = totDelta + portfolio.get(i).delta();
+			totGamma = totGamma + portfolio.get(i).gamma();
+			totTheta = totTheta + portfolio.get(i).theta();
+		}
+		
+		logger.log("Cumulative delta: " + totDelta);
+		logger.log("Cumulative gamma: " + totGamma);
+		logger.log("Cumulative theta: " + totTheta);
+	}
+	
+	/**
 	 * Main entry point
 	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		OptimisePortfolio o;
+		Boolean fromFile = false;
+		Boolean toFile = false;
+		String fname = "";
 		
 		o = new OptimisePortfolio();
 		
@@ -450,44 +492,57 @@ public class OptimisePortfolio extends Connector {
 			
 			// Read from file
 			if ((args[i].compareTo("-f") == 0 && i+1 < args.length)) {
-				try {
-					o.loadPortfolio(args[i+1]);
-				} catch (ClassNotFoundException | IOException e1) {
-					o.logger.error(e1.getMessage());
-				}				
-			} else {
-				// Connect and get the surface
-				 o.twsConnect();
-				 o.getSurface();
-				 
-				try {
-					while(System.in.available() == 0) {}
-				} catch (IOException e) {
-					o.logger.error(e.getMessage());
-				}
-					
-				// And we are done with TWS
-				o.twsDisconnect();
+				fromFile = true;
+				fname = args[i + 1];
 			}
 			
 			// Save option chain to file
 			if ((args[i].compareTo("-s") == 0 && i+1 < args.length)) {
-				try {
-					o.savePortfolio(args[i+1]);
-				} catch (IOException e) {
-					o.logger.error(e.getMessage());
-				}				
+				toFile = true;
+				fname = args[i + 1];		
 			}
+		}
+		
+		if (fromFile) {
+			try {
+				o.loadPortfolio(fname);
+			} catch (ClassNotFoundException | IOException e1) {
+				o.logger.error(e1.getMessage());
+			}
+		} else {
+			// Connect and get the surface
+			 o.twsConnect();
+			 o.getSurface();
+			 
+			try {
+				while(System.in.available() == 0) {}
+			} catch (IOException e) {
+				o.logger.error(e.getMessage());
+			}
+				
+			// And we are done with TWS
+			o.twsDisconnect();
 		}
 		
 		// Calculate volatilities
 		o.calcVol();
+		
+		if (toFile) {
+			try {
+				o.savePortfolio(fname);
+			} catch (IOException e) {
+				o.logger.error(e.getMessage());
+			}	
+		}
 		
 		// For debugging print out the surface
 		o.printSurface();
 		
 		// Create optimisation problem and optimise
 		o.optimise();	
+		
+		// Summarize the portfolio
+		//o.portfolioSummary();
 	}
 
 }

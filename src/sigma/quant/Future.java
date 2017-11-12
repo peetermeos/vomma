@@ -8,6 +8,10 @@ package sigma.quant;
  */
 public class Future extends Instrument {
 
+	/**
+	 * Generated serial
+	 */
+	private static final long serialVersionUID = 8783229229010289532L;
 	protected String expiry;
 	
 	public Future() {
