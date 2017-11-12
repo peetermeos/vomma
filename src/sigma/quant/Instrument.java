@@ -26,6 +26,8 @@ public class Instrument implements Serializable {
 	protected Double bid;
 	protected Double ask;
 	
+	protected Double pos;
+	
 	/**
 	 * Simple constructor for Instrument class
 	 */
@@ -39,6 +41,8 @@ public class Instrument implements Serializable {
 		price = -1.0;
 		bid = -1.0;
 		ask = -1.0;
+		
+		pos = 0.0;
 	}
 	
 	/**
@@ -98,6 +102,14 @@ public class Instrument implements Serializable {
 
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
+	}
+
+	public Double getPos() {
+		return pos;
+	}
+
+	public void setPos(Double pos) {
+		this.pos = pos;
 	}
 	
 	

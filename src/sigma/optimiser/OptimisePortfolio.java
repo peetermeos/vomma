@@ -284,8 +284,6 @@ public class OptimisePortfolio extends Connector {
 	 */
 	public void optimise() {
         glp_prob lp;
-        //glp_iocp parm;
-        glp_smcp parm;
         SWIGTYPE_p_int ind;
         SWIGTYPE_p_double val;
         int ret;
@@ -324,7 +322,7 @@ public class OptimisePortfolio extends Connector {
             val = GLPK.new_doubleArray(portfolio.size());
 
             // Create rows
-            GLPK.glp_add_rows(lp, 3);
+            GLPK.glp_add_rows(lp, 4);
 
             // Set row details
             
@@ -338,22 +336,25 @@ public class OptimisePortfolio extends Connector {
             GLPK.glp_set_mat_row(lp, 1, portfolio.size(), ind, val);
 
             // Bounded delta
-            GLPK.glp_set_row_name(lp, 2, "delta");
-            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_DB, -0.9, 0.9);
+            GLPK.glp_set_row_name(lp, 2, "delta_up");
+            GLPK.glp_set_row_name(lp, 3, "delta_dn");
+            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_UP, -0.9, 0.9);
+            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_LO, -0.9, 0.9);
             for (int i = 1; i <= portfolio.size(); i++) {
             	GLPK.intArray_setitem(ind, i, i);
-            	GLPK.doubleArray_setitem(val, i, portfolio.get(i - 1).delta());
+            	GLPK.doubleArray_setitem(val, i, -portfolio.get(i - 1).delta());
             }           
             GLPK.glp_set_mat_row(lp, 2, portfolio.size(), ind, val);
+            GLPK.glp_set_mat_row(lp, 3, portfolio.size(), ind, val);
             
             // Max positions open
-            GLPK.glp_set_row_name(lp, 3, "open positions");
-            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_DB, 3, 20);
+            GLPK.glp_set_row_name(lp, 4, "open positions");
+            GLPK.glp_set_row_bnds(lp, 4, GLPKConstants.GLP_UP, 3, 20);
             for (int i = 1; i <= portfolio.size(); i++) {
             	GLPK.intArray_setitem(ind, i, i);
             	GLPK.doubleArray_setitem(val, i, 1.0);
             }           
-            GLPK.glp_set_mat_row(lp, 3, portfolio.size(), ind, val);
+            GLPK.glp_set_mat_row(lp, 4, portfolio.size(), ind, val);
 
             // Free memory
             GLPK.delete_intArray(ind);
@@ -362,18 +363,23 @@ public class OptimisePortfolio extends Connector {
             // Write model to file
             GLPK.glp_write_lp(lp, null, "lp.lp");
 
-            // Solve model as LP
-             parm = new glp_smcp();
-             GLPK.glp_init_smcp(parm);
-             ret = GLPK.glp_simplex(lp, parm);
+            Boolean mip = false;
             
-            // Solve model as MIP
-            //parm = new glp_iocp();
-            //GLPK.glp_init_iocp(parm);
-            //parm.setPresolve(GLPKConstants.GLP_ON);
-            //GLPK.glp_write_lp(lp, null, "yi.lp");
-            //ret = GLPK.glp_intopt(lp, parm);
-
+            if (!mip) {
+	            // Solve model as LP
+	            glp_smcp parm = new glp_smcp();
+	            parm.setMsg_lev(GLPKConstants.GLP_MSG_ALL);
+	            GLPK.glp_init_smcp(parm);
+	            ret = GLPK.glp_simplex(lp, parm);
+            } else {
+	            // Solve model as MIP
+	            glp_iocp parm = new glp_iocp();
+	            GLPK.glp_init_iocp(parm);
+	            parm.setMsg_lev(GLPKConstants.GLP_MSG_ALL);
+	            parm.setPresolve(GLPKConstants.GLP_ON);
+	            GLPK.glp_write_lp(lp, null, "yi.lp");
+	            ret = GLPK.glp_intopt(lp, parm);
+            }
             // Retrieve solution
             if (ret == 0) {
                writeLpSolution(lp);
@@ -399,12 +405,15 @@ public class OptimisePortfolio extends Connector {
         String name;
         double val;
 
+        logger.log("LP solution output");
+        
         name = GLPK.glp_get_obj_name(lp);
         val = GLPK.glp_get_obj_val(lp);
         logger.log(name + " = " + val);
 
         n = GLPK.glp_get_num_cols(lp);
         for (i = 1; i <= n; i++) {
+        	portfolio.get(i - 1).setPos(-val);
             name = GLPK.glp_get_col_name(lp, i);
             val = GLPK.glp_get_col_prim(lp, i);
             logger.log(name + " = " + val);
@@ -452,21 +461,35 @@ public class OptimisePortfolio extends Connector {
 	 * Calculates portfolio greeks and outputs them 
 	 */
 	public void portfolioSummary() {
+		String fmt = "%5.4f";
+		
 		Double totDelta = 0.0;
 		Double totGamma = 0.0;
 		Double totTheta = 0.0;
+		Double totVega  = 0.0;
+		Double totThega = 0.0;
+		Double totSpeed = 0.0;
+		Double totColor = 0.0;
 		
 		logger.log("Porftolio summary");
 		
 		for(int i = 0; i < portfolio.size(); i++) {
-			totDelta = totDelta + portfolio.get(i).delta();
-			totGamma = totGamma + portfolio.get(i).gamma();
-			totTheta = totTheta + portfolio.get(i).theta();
+			totDelta = totDelta + portfolio.get(i).delta() * portfolio.get(i).getPos();
+			totGamma = totGamma + portfolio.get(i).gamma() * portfolio.get(i).getPos();
+			totTheta = totTheta + portfolio.get(i).theta() * portfolio.get(i).getPos();
+			totVega  = totVega  + portfolio.get(i).vega()  * portfolio.get(i).getPos();
+			totThega = totThega + portfolio.get(i).thega() * portfolio.get(i).getPos();
+			totSpeed = totSpeed + portfolio.get(i).speed() * portfolio.get(i).getPos();
+			totColor = totColor + portfolio.get(i).color() * portfolio.get(i).getPos();
 		}
 		
-		logger.log("Cumulative delta: " + totDelta);
-		logger.log("Cumulative gamma: " + totGamma);
-		logger.log("Cumulative theta: " + totTheta);
+		logger.log("Cumulative delta: " + String.format(fmt, totDelta));
+		logger.log("Cumulative gamma: " + String.format(fmt, totGamma));
+		logger.log("Cumulative theta: " + String.format(fmt, totTheta));
+		logger.log("Cumulative vega: "  + String.format(fmt, totVega));
+		logger.log("Cumulative thega: " + String.format(fmt, totThega));
+		logger.log("Cumulative speed: " + String.format(fmt, totSpeed));
+		logger.log("Cumulative color: " + String.format(fmt, totColor));
 	}
 	
 	/**
@@ -487,6 +510,8 @@ public class OptimisePortfolio extends Connector {
 			// Help
 			if ((args[i].compareTo("-h") == 0) ||  (args[i].compareTo("--help") == 0)) {
 				System.out.println("-h --help print this help text.");
+				System.out.println("-f <fname> gets portfolio from file (not TWS)");
+				System.out.println("-s <fname> saves portfolio to file");
 				System.exit(0);
 			}
 			
@@ -542,7 +567,7 @@ public class OptimisePortfolio extends Connector {
 		o.optimise();	
 		
 		// Summarize the portfolio
-		//o.portfolioSummary();
+		o.portfolioSummary();
 	}
 
 }
