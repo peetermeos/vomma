@@ -453,8 +453,7 @@ public class OptimisePortfolio extends Connector {
 				try {
 					o.loadPortfolio(args[i+1]);
 				} catch (ClassNotFoundException | IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					o.logger.error(e1.getMessage());
 				}				
 			} else {
 				// Connect and get the surface
@@ -464,7 +463,7 @@ public class OptimisePortfolio extends Connector {
 				try {
 					while(System.in.available() == 0) {}
 				} catch (IOException e) {
-					o.logger.error(e.toString());
+					o.logger.error(e.getMessage());
 				}
 					
 				// And we are done with TWS
@@ -476,8 +475,7 @@ public class OptimisePortfolio extends Connector {
 				try {
 					o.savePortfolio(args[i+1]);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					o.logger.error(e.getMessage());
 				}				
 			}
 		}
