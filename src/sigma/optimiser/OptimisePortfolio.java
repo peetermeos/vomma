@@ -423,9 +423,8 @@ public class OptimisePortfolio extends Connector {
 		FileInputStream fis = new FileInputStream(fname);
 		ObjectInputStream ois = new ObjectInputStream(fis);
 		
-		if (ois.readObject() instanceof ArrayList) {
-			portfolio = (ArrayList<Option>) ois.readObject();	
-		}
+		logger.log("Loading portfolio from " + fname);
+		portfolio = (ArrayList<Option>) ois.readObject();	
 		
 		ois.close();
 		fis.close();
@@ -441,12 +440,46 @@ public class OptimisePortfolio extends Connector {
 		
 		o = new OptimisePortfolio();
 		
-		o.twsConnect();
-		o.getSurface();
-		try {
-			while(System.in.available() == 0) {}
-		} catch (IOException e) {
-			o.logger.error(e.toString());
+		// Parse the arguments
+		for(int i = 0; i < args.length; i++) {
+			// Help
+			if ((args[i].compareTo("-h") == 0) ||  (args[i].compareTo("--help") == 0)) {
+				System.out.println("-h --help print this help text.");
+				System.exit(0);
+			}
+			
+			// Read from file
+			if ((args[i].compareTo("-f") == 0 && i+1 < args.length)) {
+				try {
+					o.loadPortfolio(args[i+1]);
+				} catch (ClassNotFoundException | IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}				
+			} else {
+				// Connect and get the surface
+				 o.twsConnect();
+				 o.getSurface();
+				 
+				try {
+					while(System.in.available() == 0) {}
+				} catch (IOException e) {
+					o.logger.error(e.toString());
+				}
+					
+				// And we are done with TWS
+				o.twsDisconnect();
+			}
+			
+			// Save option chain to file
+			if ((args[i].compareTo("-s") == 0 && i+1 < args.length)) {
+				try {
+					o.savePortfolio(args[i+1]);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}				
+			}
 		}
 		
 		// Calculate volatilities
@@ -456,10 +489,7 @@ public class OptimisePortfolio extends Connector {
 		o.printSurface();
 		
 		// Create optimisation problem and optimise
-		o.optimise();
-		
-		// And we are done with TWS
-		o.twsDisconnect();
+		o.optimise();	
 	}
 
 }
