@@ -1,7 +1,6 @@
 package sigma.optimiser;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -279,10 +278,124 @@ public class OptimisePortfolio extends Connector {
 		}
 	}
 	
-	/** 
-	 * Main optimisation routine
+	/**
+	 * Another take on the optimisation
 	 */
-	public void optimise() {
+	public void maxTheta() {
+        glp_prob lp;
+        SWIGTYPE_p_int ind;
+        SWIGTYPE_p_double val;
+        int ret;
+        
+        // Bounds
+        int maxPos = 5;	
+        
+        try {
+            // Create problem
+            lp = GLPK.glp_create_prob();
+            logger.log("Problem created");
+            GLPK.glp_set_prob_name(lp, "maxTheta");
+
+            // Define objective
+            GLPK.glp_set_obj_name(lp, "z");
+            GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MAX);
+            GLPK.glp_set_obj_coef(lp, 0, 0.0);
+            
+            // Define columns one for every portfolio entry
+            // Add objective function coefficients
+            GLPK.glp_add_cols(lp, portfolio.size());
+            for(int i = 0; i < portfolio.size(); i++) {
+            	GLPK.glp_set_col_name(lp, i + 1, "x" + portfolio.get(i).getId());
+                GLPK.glp_set_col_kind(lp, i + 1, GLPKConstants.GLP_IV);
+                GLPK.glp_set_col_bnds(lp, i + 1, GLPKConstants.GLP_DB, 0, maxPos);
+                
+                // Thetas to the objective function
+                GLPK.glp_set_obj_coef(lp, i + 1, -portfolio.get(i).theta()); 
+            }
+            
+            // Create constraints
+
+            // Allocate memory
+            ind = GLPK.new_intArray(portfolio.size());
+            val = GLPK.new_doubleArray(portfolio.size());
+
+            // Create rows
+            GLPK.glp_add_rows(lp, 4);
+            
+            // Set row details
+            
+            // Bounded gamma
+            GLPK.glp_set_row_name(lp, 1, "gamma");
+            GLPK.glp_set_row_bnds(lp, 1, GLPKConstants.GLP_UP, 0.0 , 0.8);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, portfolio.get(i - 1).gamma());
+            }
+            GLPK.glp_set_mat_row(lp, 1, portfolio.size(), ind, val);
+            
+            // Bounded delta
+            GLPK.glp_set_row_name(lp, 2, "delta_up");
+            GLPK.glp_set_row_name(lp, 3, "delta_dn");
+            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_UP, -0.9, 0.9);
+            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_LO, -0.9, 0.9);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, -portfolio.get(i - 1).delta());
+            }           
+            GLPK.glp_set_mat_row(lp, 2, portfolio.size(), ind, val);
+            GLPK.glp_set_mat_row(lp, 3, portfolio.size(), ind, val);
+            
+            // Max positions open
+            GLPK.glp_set_row_name(lp, 4, "open positions");
+            GLPK.glp_set_row_bnds(lp, 4, GLPKConstants.GLP_UP, 3, 20);
+            for (int i = 1; i <= portfolio.size(); i++) {
+            	GLPK.intArray_setitem(ind, i, i);
+            	GLPK.doubleArray_setitem(val, i, 1.0);
+            }           
+            GLPK.glp_set_mat_row(lp, 4, portfolio.size(), ind, val);
+
+            // Free memory
+            GLPK.delete_intArray(ind);
+            GLPK.delete_doubleArray(val);
+
+            // Write model to file
+            GLPK.glp_write_lp(lp, null, "lp.lp");
+
+            Boolean mip = true;
+            
+            if (!mip) {
+	            // Solve model as LP
+	            glp_smcp parm = new glp_smcp();
+	            parm.setMsg_lev(GLPKConstants.GLP_MSG_ALL);
+	            GLPK.glp_init_smcp(parm);
+	            ret = GLPK.glp_simplex(lp, parm);
+            } else {
+	            // Solve model as MIP
+	            glp_iocp parm = new glp_iocp();
+	            GLPK.glp_init_iocp(parm);
+	            parm.setMsg_lev(GLPKConstants.GLP_MSG_ALL);
+	            parm.setPresolve(GLPKConstants.GLP_ON);
+	            GLPK.glp_write_lp(lp, null, "yi.lp");
+	            ret = GLPK.glp_intopt(lp, parm);
+            }
+            // Retrieve solution
+            if (ret == 0) {
+               writeLpSolution(lp);
+            } else {
+               logger.error("The problem could not be solved");
+            }
+
+            // Free memory
+            GLPK.glp_delete_prob(lp);
+        } catch (GlpkException e) {
+            logger.error(e.toString());
+        }
+	}
+	
+	/** 
+	 * Gamma minimisation variant of the optimisation
+	 */
+	public void minGamma() {
         glp_prob lp;
         SWIGTYPE_p_int ind;
         SWIGTYPE_p_double val;
@@ -301,8 +414,7 @@ public class OptimisePortfolio extends Connector {
             GLPK.glp_set_obj_name(lp, "z");
             GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MIN);
             GLPK.glp_set_obj_coef(lp, 0, 1.);
-
-            
+          
             // Define columns one for every portfolio entry
             // Add objective function coefficients
             GLPK.glp_add_cols(lp, portfolio.size());
@@ -363,7 +475,7 @@ public class OptimisePortfolio extends Connector {
             // Write model to file
             GLPK.glp_write_lp(lp, null, "lp.lp");
 
-            Boolean mip = false;
+            Boolean mip = true;
             
             if (!mip) {
 	            // Solve model as LP
@@ -392,6 +504,26 @@ public class OptimisePortfolio extends Connector {
         } catch (GlpkException e) {
             logger.error(e.toString());
         }
+	}
+	
+	/**
+	 * Optimisation with new refactoring of Optimiser class.
+	 */
+	public void optimise() {
+		Optimiser opt;
+		
+		opt = new Optimiser();
+		
+		opt.loadData(portfolio);
+		opt.objMaximiseTheta(5);
+		
+		opt.constrDelta(0.8);
+		opt.constrGamma(0.8);
+		opt.constrMaxPortfolio(20);
+		
+		opt.solve(false);
+		opt.writeLpSolution();
+		portfolio = opt.returnSolution();
 	}
 	
 	/**
@@ -564,7 +696,8 @@ public class OptimisePortfolio extends Connector {
 		o.printSurface();
 		
 		// Create optimisation problem and optimise
-		o.optimise();	
+		//o.optimise();	
+		o.maxTheta();
 		
 		// Summarize the portfolio
 		o.portfolioSummary();
