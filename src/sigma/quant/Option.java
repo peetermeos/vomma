@@ -1,5 +1,12 @@
 package sigma.quant;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
 import com.ib.client.Contract;
 import com.ib.client.Types.SecType;
 
@@ -13,8 +20,12 @@ import cern.jet.random.tdouble.engine.MersenneTwister64;
  * @version 0.1
  *
  */
-public class Option {
-	int id;
+public class Option extends Instrument {
+	
+	/**
+	 * Serial ID
+	 */
+	//private static final long serialVersionUID = 6122198818823516634L;
 	
 	// Option valuation parameters
 	Double s;     // Spot
@@ -25,28 +36,16 @@ public class Option {
 	Double d;     // Dividends
 	OptSide side; // Side
 	
+	Future ul;
+	
 	String expiry;
-	String symbol;
-	String exchange;
-	String localSymbol;
-	String ulLocalSymbol;
-	String lastTradeDate;
-	
-	int ulId;
-	
-	Double mktBid;
-	Double mktAsk;
-	Double mktLast;
-	
-	Double spotBid;
-	Double spotAsk;
-	Double spotLast;
-
 	
 	/**
 	 * Default constructor, zero to all parameters
 	 */
 	public Option() {
+		super();
+		
 		s = 0.0;
 		k = 0.0;
 		t = 0.0;
@@ -55,12 +54,8 @@ public class Option {
 		d = 0.0;
 		side = OptSide.CALL;
 		
-		
-		this.localSymbol = "";
-		this.mktBid = -1.0;
-		this.mktAsk = -1.0;
-		this.mktLast = -1.0;
-
+		secType = "FOP";
+		this.ul = new Future();
 	}
 	
 	/**
@@ -76,6 +71,7 @@ public class Option {
 		this.symbol = symbol;
 		this.side = side;
 		this.k = k;
+		
 		this.expiry = expiry;
 	}
 	
@@ -100,6 +96,41 @@ public class Option {
 		this.r = r;
 		this.d = d;
 		this.side = side;
+		this.ul.price = s;
+	}
+	
+	private Double s() {
+		return this.ul.price;
+	}
+	
+	/**
+	 * Calculates volatility for the option
+	 */
+	public void calcVol() {
+		this.sigma = 0.0;
+		BSImplied bs;
+		Calendar cal = Calendar.getInstance();
+		Date t0;
+		Date t1 = new Date();
+		
+		// First we need to find the expiry time
+		t0 = cal.getTime();
+		
+		DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+		
+		try {
+			t1 = format.parse(this.expiry);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	
+		this.t = (double)(t1.getTime() - t0.getTime()) / (365.0 * 24.0 * 60.0 * 60.0 * 1000.0);
+		
+		// Now calculate IV
+		bs = new BSImplied(this.ul.getPrice(), 
+				           this.k, this.r, this.price, t, (side == OptSide.PUT));
+		bs.findImplied();
+		this.sigma = bs.Value;
 	}
 	
 	/**
@@ -143,7 +174,7 @@ public class Option {
 	 * @return Double d1 value
 	 */
 	private Double d1() {
-		return((Math.log(s / k) + t * (r + 0.5 * sigma * sigma)) / (sigmatau()));
+		return((Math.log(s() / k) + t * (r + 0.5 * sigma * sigma)) / (sigmatau()));
 	}
 	
 	/**
@@ -161,7 +192,7 @@ public class Option {
 	 * @return Double Call price
 	 */
 	public Double call() {
-		return(s * cdf(d1()) - Math.exp(-r * t) * k * cdf(d2()));
+		return(s() * cdf(d1()) - Math.exp(-r * t) * k * cdf(d2()));
 	}
 	
 	/**
@@ -170,7 +201,7 @@ public class Option {
 	 * @return Double Put price
 	 */
 	public Double put() {
-		return(call() - s + k * Math.exp(-r * t));
+		return(call() - s() + k * Math.exp(-r * t));
 	}
 	
 	/**
@@ -192,7 +223,7 @@ public class Option {
 	 * @return gamma of the option
 	 */
 	public Double gamma() {
-		return(Math.exp(-d * t) * phi(d1()) / (s * sigmatau()));
+		return(Math.exp(-d * t) * phi(d1()) / (s() * sigmatau()));
 	}
 	
 	/**
@@ -201,7 +232,7 @@ public class Option {
 	 * @return vega of the option
 	 */
 	public Double vega() {
-		return(s * Math.exp(-d * t) * phi(d1()) * Math.sqrt(t));
+		return(s() * Math.exp(-d * t) * phi(d1()) * Math.sqrt(t));
 	}
 	
 	/**
@@ -214,9 +245,9 @@ public class Option {
 		Double y;
 		Double z;
 		
-		x = -Math.exp(-d * t) * (s * phi(d1()) * sigma) / (2 * Math.sqrt(t));
+		x = -Math.exp(-d * t) * (s() * phi(d1()) * sigma) / (2 * Math.sqrt(t));
 		y = r * k * Math.exp(-r * t);
-		z = d * s * Math.exp(-d * t);
+		z = d * s() * Math.exp(-d * t);
 		
 		if(side == OptSide.CALL) {
 			return(x - y * cdf(d2()) + z * cdf(d1()));
@@ -255,10 +286,10 @@ public class Option {
 		Double z;
 		Double u;
 		
-		x = -(s * sigma * phi(d1())) / (4 * t * Math.sqrt(t)) * (1 + (2 * (r - d) * t - d2() * sigmatau()) / sigmatau() * d1());
+		x = -(s() * sigma * phi(d1())) / (4 * t * Math.sqrt(t)) * (1 + (2 * (r - d) * t - d2() * sigmatau()) / sigmatau() * d1());
 		y = r * r * k * Math.exp(-r * t) * cdf(d2());
-		z = d * d * s * Math.exp(-d * t) * cdf(d1());
-		u = s * Math.exp(-d * t) * phi(d1()) * (2 * (r - d) * (r - d) * t - d2() * sigmatau()) / (2 * t * sigmatau());
+		z = d * d * s() * Math.exp(-d * t) * cdf(d1());
+		u = s() * Math.exp(-d * t) * phi(d1()) * (2 * (r - d) * (r - d) * t - d2() * sigmatau()) / (2 * t * sigmatau());
 		
 		if(side == OptSide.CALL) {
 			return(x - y + z + u);
@@ -273,7 +304,7 @@ public class Option {
 	 * @return color of the option
 	 */
 	public Double color() {
-		return(-Math.exp(-d * t) * phi(d1()) / (2 * s * t * sigmatau()) * (2 * d * t + 1 + (2 * (r - d) * t - d2() * sigmatau()) / (sigmatau()) * d1()));
+		return(-Math.exp(-d * t) * phi(d1()) / (2 * s() * t * sigmatau()) * (2 * d * t + 1 + (2 * (r - d) * t - d2() * sigmatau()) / (sigmatau()) * d1()));
 	}
 	
 	/**
@@ -282,7 +313,7 @@ public class Option {
 	 * @return speed of the option
 	 */
 	public Double speed() {
-		return(-gamma() / s * (d1() / sigmatau() + 1));
+		return(-gamma() / s() * (d1() / sigmatau() + 1));
 	}
 
 	/**
@@ -365,128 +396,33 @@ public class Option {
 		this.expiry = expiry;
 	}
 
-	/**
-	 * Returns symbol name of the instrument
-	 * 
-	 * @return String symbol name
-	 */
-	public String getSymbol() {
-		return symbol;
+	public Future getUl() {
+		return ul;
+	}
+
+	public void setUl(Future ul) {
+		this.ul = ul;
+	}
+
+	public Double getSigma() {
+		return sigma;
+	}
+
+	public void setSigma(Double sigma) {
+		this.sigma = sigma;
+	}
+
+	public Double getStrike() {
+		return this.k;
 	}
 
 	/**
-	 * Sets symbol name for the instrument
-	 * 
-	 * @param symbol
+	 * Calculates greeks for the option
 	 */
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-
-	public String getExchange() {
-		return exchange;
-	}
-
-	public void setExchange(String exchange) {
-		this.exchange = exchange;
-	}
-
-	public String getLocalSymbol() {
-		return localSymbol;
-	}
-
-	/**
-	 * Based on local option symbol sets local symbol 
-	 * for option and its underlying
-	 * 
-	 * @param localSymbol
-	 */
-	public void setLocalSymbol(String localSymbol) {
-		String[] parts;
+	public void calcGreeks() {
 		
-		parts = localSymbol.split(" ");
 		
-		this.localSymbol = localSymbol;
-		this.ulLocalSymbol = parts[0];
 	}
 
-	public String getLastTradeDate() {
-		return lastTradeDate;
-	}
 
-	public void setLastTradeDate(String lastTradeDate) {
-		this.lastTradeDate = lastTradeDate;
-	}
-
-	public Double getMktBid() {
-		return mktBid;
-	}
-
-	public void setMktBid(Double mktBid) {
-		this.mktBid = mktBid;
-		if(this.getMktAsk() > 0) {
-			this.mktLast = (this.mktAsk + this.mktBid) / 2;
-		}
-	}
-
-	public Double getMktAsk() {
-		return mktAsk;
-	}
-
-	public void setMktAsk(Double mktAsk) {
-		this.mktAsk = mktAsk;
-		if(this.getSpotBid() > 0) {
-			this.mktLast = (this.mktAsk + this.mktBid) / 2;
-		}
-	}
-
-	public Double getMktLast() {
-		return mktLast;
-	}
-
-	public void setMktLast(Double mktLast) {
-		this.mktLast = mktLast;
-	}
-
-	public Double getSpotBid() {
-		return spotBid;
-	}
-
-	public void setSpotBid(Double spotBid) {
-		this.spotBid = spotBid;
-		
-		if(this.getSpotAsk() > 0) {
-			this.s = (this.spotAsk + this.spotBid) / 2;
-		}
-
-	}
-
-	public Double getSpotAsk() {
-		return spotAsk;
-	}
-
-	public void setSpotAsk(Double spotAsk) {
-		this.spotAsk = spotAsk;
-		if(this.getSpotBid() > 0) {
-			this.s = (this.spotAsk + this.spotBid) / 2;
-		}
-	}
-
-	public Double getSpotLast() {
-		return spotLast;
-	}
-
-	public void setSpotLast(Double spotLast) {
-		this.spotLast = spotLast;
-		this.s = spotLast;
-	}
-
-	public int getUlId() {
-		return ulId;
-	}
-
-	public void setUlId(int ulId) {
-		this.ulId = ulId;
-	}
-	
 }
