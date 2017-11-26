@@ -25,7 +25,7 @@ public class Option extends Instrument {
 	/**
 	 * Serial ID
 	 */
-	//private static final long serialVersionUID = 6122198818823516634L;
+	private static final long serialVersionUID = 6122198818823516634L;
 	
 	// Option valuation parameters
 	Double s;     // Spot
@@ -39,6 +39,7 @@ public class Option extends Instrument {
 	Future ul;
 	
 	String expiry;
+	String optionMonth;
 	
 	/**
 	 * Default constructor, zero to all parameters
@@ -47,7 +48,7 @@ public class Option extends Instrument {
 		super();
 		
 		s = 0.0;
-		k = 0.0;
+		k = -1.0;
 		t = 0.0;
 		sigma = 0.0;
 		r = 0.0;
@@ -72,7 +73,7 @@ public class Option extends Instrument {
 		this.side = side;
 		this.k = k;
 		
-		this.expiry = expiry;
+		this.optionMonth = expiry;
 	}
 	
 	/**
@@ -223,7 +224,13 @@ public class Option extends Instrument {
 	 * @return gamma of the option
 	 */
 	public Double gamma() {
-		return(Math.exp(-d * t) * phi(d1()) / (s() * sigmatau()));
+		Double val;
+		val = Math.exp(-d * t) * phi(d1()) / (s() * sigmatau());
+		if (Double.isNaN(val)) {
+		  return 0.0;
+		} else {
+		  return(val);
+		}
 	}
 	
 	/**
@@ -329,7 +336,7 @@ public class Option extends Instrument {
 		c.symbol(this.symbol);
 		c.secType(SecType.FOP);
 		c.exchange(this.exchange);
-		c.lastTradeDateOrContractMonth(this.expiry);
+		c.lastTradeDateOrContractMonth(this.optionMonth);
 		c.strike(this.k);
 		c.right(this.side.toString());
 		
@@ -347,7 +354,7 @@ public class Option extends Instrument {
 		c.symbol(this.symbol);
 		c.secType(SecType.FUT);
 		c.exchange(this.exchange);
-		c.lastTradeDateOrContractMonth(this.expiry);
+		c.lastTradeDateOrContractMonth(this.optionMonth);
 		//c.localSymbol(this.ulLocalSymbol);
 
 		return(c);
@@ -422,6 +429,14 @@ public class Option extends Instrument {
 	public void calcGreeks() {
 		
 		
+	}
+
+	public String getOptionMonth() {
+		return optionMonth;
+	}
+
+	public void setOptionMonth(String optionMonth) {
+		this.optionMonth = optionMonth;
 	}
 
 

@@ -48,6 +48,9 @@ public class OptimisePortfolio extends Connector {
 	
 	protected Instrument inst;
 	protected ArrayList<Option> portfolio;
+	protected double limDelta;
+	protected double limTheta;
+	protected double limGamma;
 	
 	private Boolean done;
 		
@@ -57,10 +60,16 @@ public class OptimisePortfolio extends Connector {
 	public OptimisePortfolio() {
 		super();
 		
-		Double[] strikeArray = {45.0 ,50.0, 55.0};
-		String[] expiryArray = {"201801", "201802"};
+		Double[] strikeArray = {45.0, 46.0, 47.0, 48.0, 49.0,
+				                50.0, 51.0, 52.0, 53.0, 54.0,
+				                55.0, 56.0, 57.0, 58.0, 59.0,
+				                60.0, 61.0, 62.0};
+		String[] expiryArray = {"201802", "201803", "201804", "201805", "201806"};
 		
 		portfolio = new ArrayList<>();
+		limDelta = 0.9;
+		limTheta = 0.3;
+		limGamma = 0.9;
 		
 		// Add placeholders for options
 		for(Double k: strikeArray)
@@ -78,7 +87,7 @@ public class OptimisePortfolio extends Connector {
         logger.verbose(EWrapperMsgGenerator.contractDetails(reqId, contractDetails));
         // Find matching entry in option surface
         // and populate local symbol and last trading date
-        if(reqId < 1000) {
+        if(reqId < 2000) {
         	portfolio.get(reqId).setExpiry(contractDetails.contract().lastTradeDateOrContractMonth());
         }
 	}
@@ -116,6 +125,12 @@ public class OptimisePortfolio extends Connector {
 		// Request market data for options
 		logger.log("Request market data for options");
 		for(int i = 0; i < portfolio.size(); i++) {
+			try {
+				// In order to avoid pacing violation
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				logger.error(e.toString());
+			}
 			this.getClient().reqMktData(1000 + i,  portfolio.get(i).getContract(), "", true, false, null);
 		}
 		
@@ -141,6 +156,7 @@ public class OptimisePortfolio extends Connector {
 			if (!allDone) {
 				used.add(portfolio.get(i).getUnderlying().lastTradeDateOrContractMonth());
 				portfolio.get(i).getUl().setId(ulId);
+				//logger.log(c.toString());
 				this.getClient().reqMktData(ulId, c, "", true, false, null);
 				ulId++;
 			}
@@ -434,24 +450,27 @@ public class OptimisePortfolio extends Connector {
             val = GLPK.new_doubleArray(portfolio.size());
 
             // Create rows
+            //GLPK.glp_add_rows(lp, 1);
             GLPK.glp_add_rows(lp, 4);
 
             // Set row details
             
             // Bounded theta
+            
             GLPK.glp_set_row_name(lp, 1, "theta");
-            GLPK.glp_set_row_bnds(lp, 1, GLPKConstants.GLP_LO, 0.2 * 365, 0.0);
+            GLPK.glp_set_row_bnds(lp, 1, GLPKConstants.GLP_LO, limTheta * 365, 0.0);
             for (int i = 1; i <= portfolio.size(); i++) {
             	GLPK.intArray_setitem(ind, i, i);
             	GLPK.doubleArray_setitem(val, i, -portfolio.get(i - 1).theta());
             }
             GLPK.glp_set_mat_row(lp, 1, portfolio.size(), ind, val);
-
+			
+            
             // Bounded delta
             GLPK.glp_set_row_name(lp, 2, "delta_up");
             GLPK.glp_set_row_name(lp, 3, "delta_dn");
-            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_UP, -0.9, 0.9);
-            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_LO, -0.9, 0.9);
+            GLPK.glp_set_row_bnds(lp, 2, GLPKConstants.GLP_UP, -limDelta, limDelta);
+            GLPK.glp_set_row_bnds(lp, 3, GLPKConstants.GLP_LO, -limDelta, limDelta);
             for (int i = 1; i <= portfolio.size(); i++) {
             	GLPK.intArray_setitem(ind, i, i);
             	GLPK.doubleArray_setitem(val, i, -portfolio.get(i - 1).delta());
@@ -459,15 +478,17 @@ public class OptimisePortfolio extends Connector {
             GLPK.glp_set_mat_row(lp, 2, portfolio.size(), ind, val);
             GLPK.glp_set_mat_row(lp, 3, portfolio.size(), ind, val);
             
-            // Max positions open
-            GLPK.glp_set_row_name(lp, 4, "open positions");
+            
+            // Max positions open            
+            GLPK.glp_set_row_name(lp, 4, "open_pos");
             GLPK.glp_set_row_bnds(lp, 4, GLPKConstants.GLP_UP, 3, 20);
             for (int i = 1; i <= portfolio.size(); i++) {
             	GLPK.intArray_setitem(ind, i, i);
             	GLPK.doubleArray_setitem(val, i, 1.0);
             }           
             GLPK.glp_set_mat_row(lp, 4, portfolio.size(), ind, val);
-
+			
+            
             // Free memory
             GLPK.delete_intArray(ind);
             GLPK.delete_doubleArray(val);
@@ -475,7 +496,7 @@ public class OptimisePortfolio extends Connector {
             // Write model to file
             GLPK.glp_write_lp(lp, null, "lp.lp");
 
-            Boolean mip = true;
+            Boolean mip = false;
             
             if (!mip) {
 	            // Solve model as LP
@@ -491,8 +512,10 @@ public class OptimisePortfolio extends Connector {
 	            parm.setPresolve(GLPKConstants.GLP_ON);
 	            GLPK.glp_write_lp(lp, null, "yi.lp");
 	            ret = GLPK.glp_intopt(lp, parm);
+	            
             }
             // Retrieve solution
+            GLPK.glp_print_sol(lp, "sol.lp");
             if (ret == 0) {
                writeLpSolution(lp);
             } else {
@@ -548,7 +571,7 @@ public class OptimisePortfolio extends Connector {
         	portfolio.get(i - 1).setPos(-val);
             name = GLPK.glp_get_col_name(lp, i);
             val = GLPK.glp_get_col_prim(lp, i);
-            logger.log(name + " = " + val);
+            //logger.log(name + " = " + val);
         }
     }
 	
@@ -605,6 +628,7 @@ public class OptimisePortfolio extends Connector {
 		
 		logger.log("Porftolio summary");
 		
+		
 		for(int i = 0; i < portfolio.size(); i++) {
 			totDelta = totDelta + portfolio.get(i).delta() * portfolio.get(i).getPos();
 			totGamma = totGamma + portfolio.get(i).gamma() * portfolio.get(i).getPos();
@@ -615,6 +639,18 @@ public class OptimisePortfolio extends Connector {
 			totColor = totColor + portfolio.get(i).color() * portfolio.get(i).getPos();
 		}
 		
+		logger.log("Non-zero positions");
+		for(int i = 0; i < portfolio.size(); i++) {
+			if (portfolio.get(i).getPos() != 0) {
+				logger.log(portfolio.get(i).getSymbol() +
+					       " " + portfolio.get(i).getStrike() +
+	                       " " + portfolio.get(i).getSide() +
+	                       " " + portfolio.get(i).getOptionMonth() +
+						   " : " + String.format(fmt, portfolio.get(i).getPos()));
+			}
+		}
+		
+		logger.log("Cumulative greeks");
 		logger.log("Cumulative delta: " + String.format(fmt, totDelta));
 		logger.log("Cumulative gamma: " + String.format(fmt, totGamma));
 		logger.log("Cumulative theta: " + String.format(fmt, totTheta));
@@ -696,8 +732,8 @@ public class OptimisePortfolio extends Connector {
 		o.printSurface();
 		
 		// Create optimisation problem and optimise
-		//o.optimise();	
-		o.maxTheta();
+		//o.maxTheta();
+		o.minGamma();
 		
 		// Summarize the portfolio
 		o.portfolioSummary();
